@@ -88,4 +88,35 @@ class GenericSensor {
   ) { }
 }
 
-export { Alarme, GenericSensor, AlarmeValue, AlarmeHistory }
+class Evse {
+  measurement: string;
+  connectorId: string;
+  startMeter: string;
+  transactionId: string;
+  startTime: string;
+  idTag: string;
+  deviceId: string;
+  timestamp: string;
+
+  constructor(
+    measurement: string,
+    connectorId: string,
+    startMeter: string,
+    transactionId: string,
+    startTime: string,
+    idTag: string,
+    deviceId: string,
+    timestamp: string,
+  ) {
+    this.measurement = measurement;
+    this.connectorId = connectorId;
+    this.startMeter = startMeter;
+    this.transactionId = transactionId;
+    this.startTime = startTime;
+    this.idTag = idTag;
+    this.deviceId = deviceId;
+    this.timestamp = timestamp;
+  }
+}
+
+export { Alarme, GenericSensor, AlarmeValue, AlarmeHistory, Evse }
