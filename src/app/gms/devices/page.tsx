@@ -46,6 +46,7 @@ const Sensores = () => {
   const [alarmSensor, setAlarmSensor] = useState<GenericSensor>();
   const [triggerType, setTriggerType] = useState('');
   const [trigger, setTrigger] = useState<string>('0');
+  const [alarmName, setAlarmName] = useState<string>('')
   const [triggerAt, setTriggerAt] = useState<string>('higher');
   const [actionSensor, setActionSensor] = useState<string>("");
   const [alarmInsertAttempt, setAlarmInsertAttempt] = useState<boolean>(false);
@@ -69,6 +70,7 @@ const Sensores = () => {
         const { data, error } = await supabase.from('Alarms').insert([
           {
             userId: userData[0].id,
+            alarmName: alarmName,
             type: alarmSensor.type,
             local: alarmSensor.local,
             deveui: alarmSensor.tags[0],
@@ -590,7 +592,11 @@ const Sensores = () => {
             </div>
             <div className="m-2 flex flex-col justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
               <div className="m-2">
-                <p className="font-bold text-3xl text-center">Criar Alarme</p>
+                <p className="font-bold text-3xl text-center m-2">Criar Alarme</p>
+                <p>
+                  Digite um nome para o seu alarme:
+                </p>
+                <input type="text" id="alarmName" className="mx-1 w-32 border border-black rounded p-1 text-lg m-2" placeholder="Nome" value={alarmName} onChange={(event) => setAlarmName(event.target.value)} />
                 <p>
                   Escolha o campo para o alarme
                 </p>
