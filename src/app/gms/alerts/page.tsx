@@ -413,6 +413,7 @@ const Alarmes = () => {
 
           alarms.push(newAlarm)
         });
+        alarms.reverse()
         setAlarmHistory(alarms)
       }
     }
