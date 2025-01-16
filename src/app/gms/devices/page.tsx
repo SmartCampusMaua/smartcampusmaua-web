@@ -47,7 +47,7 @@ const Sensores = () => {
   const [triggerType, setTriggerType] = useState('');
   const [trigger, setTrigger] = useState<string>('0');
   const [triggerAt, setTriggerAt] = useState<string>('higher');
-  const [actionSensor, setActionSensor] = useState<string>();
+  const [actionSensor, setActionSensor] = useState<string>("");
   const [alarmInsertAttempt, setAlarmInsertAttempt] = useState<boolean>(false);
 
   const handleNewAlarm = async () => {
