@@ -164,7 +164,6 @@ const Sensores = () => {
   };
 
   const handleExportSensor = async (measurement, id, interval) => {
-
     try {
       const url = `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/${measurement}/deviceId/${id}?interval=${interval}`;
 

@@ -8,6 +8,10 @@ import { Evse } from "@/database/dataTypes";
 
 export default function Home() {
   const [data, setData] = useState<Evse[]>([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [interval, setInterval] = useState(30); // Estado para armazenar o intervalo de dias na exportação (.csv) de um sensor
+  const [exportInfoPopupOpen, setExportInfoPopupOpen] = useState(false);
+  const [selectedSensor, setSelectedSensor] = useState<Evse>();
 
   const broker = "wss://mqtt.maua.br:8084";
   const options = {
@@ -33,15 +37,16 @@ export default function Home() {
         const jsonObject = JSON.parse(message.toString());
 
         if (jsonObject.name === "MeterValues" && jsonObject.tags.deviceType === "EVSE") {
-          const { forwardEnergy } = jsonObject.fields;  
-          const { connectorId, deviceId } = jsonObject.tags; 
-          const timestamp = jsonObject.timestamp; 
+          const { forwardEnergy } = jsonObject.fields;
+          const { chargePointId, connectorId, deviceId } = jsonObject.tags;
+          const timestamp = jsonObject.timestamp;
 
           const evse = new Evse(
-            forwardEnergy,     
-            connectorId,       
-            deviceId,          
-            timestamp          
+            chargePointId,
+            forwardEnergy,
+            connectorId,
+            deviceId,
+            timestamp
           );
 
           setData((prevData) => {
@@ -65,52 +70,263 @@ export default function Home() {
     };
   }, []);
 
+
+  const getMaxDate = () => {
+    const today = new Date();
+    today.setDate(today.getDate() - 30);
+    return today.toISOString().split("T")[0];
+  };
+
+  const calculateMinutesInterval = (date: string) => {
+    const selectedDate = new Date(date);
+    const today = new Date();
+    const diffTime = today.getTime() - selectedDate.getTime();
+    return Math.ceil(diffTime / (1000 * 60));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.value;
+    const interval = calculateMinutesInterval(selected);
+
+    if (interval > 43200 || interval <= 0 || Number.isNaN(interval)) {
+      alert("Por favor, selecione uma data dentro dos últimos 30 dias ou no máximo 43200 minutos.");
+      setSelectedDate("");
+      setInterval(30);
+    } else {
+      setSelectedDate(selected);
+      setInterval(interval);
+    }
+  };
+
+  const handleExportSensor = async (id, interval) => { // by now we are only exporting MeterValue data!! 
+    try {
+      const urls = [
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/MeterValues/deviceId/${id}?interval=${interval}`,
+        // `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/deviceId/${id}?interval=${interval}`, 
+        // `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StopTransaction/deviceId/${id}?interval=${interval}`, 
+      ];
+  
+      const fetchData = async (url) => {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Erro ao obter os dados da API: ${url}`);
+        }
+        return await response.json();
+      };
+  
+      const allData = await Promise.all(urls.map(url => fetchData(url)));
+  
+      const combinedData = allData.flat();
+  
+      const jsonToCsv = (json) => {
+        if (!Array.isArray(json) || json.length === 0) {
+          throw new Error("JSON inválido ou vazio");
+        }
+
+        const extractKeys = (obj, prefix = "") =>
+          Object.keys(obj).reduce((keys, key) => {
+            const value = obj[key];
+            if (typeof value === "object" && value !== null) {
+              return keys.concat(extractKeys(value, `${prefix}${key}.`));
+            }
+            return keys.concat(`${prefix}${key}`);
+          }, []);
+
+        const headers = [
+          ...new Set(
+            json.flatMap((item) => extractKeys(item))
+          )
+        ];
+
+        const rows = json.map((row) => {
+          return headers.map((header) => {
+            const keys = header.split(".");
+            let value = row;
+
+            for (const key of keys) {
+              value = value?.[key] ?? "";
+            }
+            return typeof value === "object" ? "" : value;
+          }).join(",");
+        }).join("\n");
+
+        return `${headers.join(",")}\n${rows}`;
+      };
+  
+      const csvData = jsonToCsv(combinedData);
+  
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+  
+      const link = document.createElement("a");
+  
+      const urlBlob = URL.createObjectURL(blob);
+  
+      link.href = urlBlob;
+      link.download = `EVSE-${id}-${interval}_minutes.csv`;
+  
+      document.body.appendChild(link);
+      link.click();
+  
+      document.body.removeChild(link);
+      URL.revokeObjectURL(urlBlob);
+  
+    } catch (error) {
+      console.error("Erro ao processar os dados:", error);
+    }
+  };
+
   return (
     <DashboardLayout>
-      <Head>
-        <title>Carregadores EVSE</title>
-      </Head>
-      <main className="p-4 bg-white">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Dados dos Carregadores EVSE
-        </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {data.length > 0 ? (
-            data.map((evse, index) => (
-              <div
-                key={evse.deviceId} 
-                className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
-              >
-                <h2 className="text-xl font-semibold mb-2">
-                  Dispositivo: {evse.deviceId}
+      {exportInfoPopupOpen ? (
+        <div className="flex flex-col w-full">
+          <div className="m-4">
+            <button
+              onClick={() => setExportInfoPopupOpen(!exportInfoPopupOpen)}
+              className="m-2 bg-red-500 hover:bg-red-700 text-white text-2xl font-bold py-3 px-6 rounded">
+              Voltar
+            </button>
+          </div>
+          <div className="container max-w-screen-lg mx-auto grid grid-cols-1 sm:grid-cols-2 justify-items-center">
+            <div className="m-2 flex justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
+              <div className="m-2">
+                <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
+                <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
+                  {selectedSensor.chargePointId || "Nome não disponível"}
                 </h2>
-                <p><strong>Foward Energy:</strong> {evse.forwardEnergy} KWh</p>
-                <p>
-                <strong>Type:</strong>{evse.connectorId.replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
-                <p><strong>Atualizado por último:</strong> {new Date(evse.timestamp * 1000).toLocaleString()}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+                  Local: {selectedSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Centro Acadêmico" : "Bloco B"}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+                  DEVEUI: {selectedSensor.deviceId}
+                </p>
+                <ul className="text-sm space-y-2">
+                  {
+                    <ul>
+                      <li>
+                        <strong>ForwardEnergy: </strong>{selectedSensor.forwardEnergy}
+                      </li>
+                      <li>
+                        <strong>BoardVoltage: </strong>{selectedSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                      </li>
+                      <li>
+                        <p><strong>Atualizado por último:</strong> {new Date(selectedSensor.timestamp * 1000).toLocaleString()}</p>
+                      </li>
+                    </ul>
+                  }
+                </ul>
               </div>
-            ))
-          ) : (
-            <>
-              {[...Array(3)].map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
+            </div>
+            {/* Field to define the time interval */}
+            <div className="m-2 flex justify-center h-fit max-w-[24rem] bg-grey-500 rounded">
+              
+              <div className="m-2">
+                <label htmlFor="dateInput" className="text-black font-bold">
+                  Selecione uma data (máximo: últimos 30 dias):
+                </label>
+                <input
+                  type="date"
+                  id="dateInput"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  max={new Date().toISOString().split("T")[0]}
+                  min={getMaxDate()}
+                  className="py-2 px-4 rounded border"
+                />
+                <label htmlFor="minutesInput" className="text-black font-bold mt-4 block">
+                  Escolha um intervalo de tempo em minutos:
+                </label>
+                <input
+                  type="number"
+                  id="minutesInput"
+                  value={interval}
+                  onChange={(e) => setInterval(Number(e.target.value))}
+                  min={1}
+                  max={43200}
+                  className="py-2 px-4 rounded border w-full"
+                  placeholder="Digite o período em minutos"
+                />
+                {interval !== null && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Você selecionou um período de {interval} minutos.<br />Aproximadamente {Math.round(interval / 1440)} dias.
+                  </p>
+                )}
+              </div>
+
+              <div className="m-2">
+                <button
+                  onClick={() => {
+                    setExportInfoPopupOpen(false);
+                    handleExportSensor(selectedSensor.deviceId, interval);
+                  }}
+                  className="bg-left text-white font-bold py-2 px-4 rounded border border-green-400 bg-green-400 hover:bg-green-700 "
                 >
-                  <div className="h-6  rounded w-3/4 mb-4 font-bold">Nenhum dado encontrado</div>
-                  <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
-                  <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-5/6 mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-2/3 mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                </div>
-              ))}
-            </>
-          )}
+                  Exportar .csv
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
+      ) : null}
+
+      {!exportInfoPopupOpen && (
+        <div>
+          <Head>
+            <title>Carregadores EVSE</title>
+          </Head>
+          <main className="p-4 bg-white">
+            <h1 className="text-3xl font-bold text-center mb-8">
+              Dados dos Carregadores EVSE
+            </h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {data.length > 0 ? (
+                data.map((evse, index) => (
+                  <div
+                    key={evse.deviceId}
+                    className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
+                  >
+                    <h2 className="text-xl font-semibold mb-2">
+                      Dispositivo: {evse.deviceId}
+                    </h2>
+                    <p><strong>Foward Energy:</strong> {evse.forwardEnergy} KWh</p>
+                    <p>
+                      <strong>Type:</strong>{evse.connectorId.replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
+                    <p><strong>Atualizado por último:</strong> {new Date(evse.timestamp * 1000).toLocaleString()}</p>
+                    <div className="flex mt-2 space-x-2">
+                      <button
+                        onClick={() => {
+                          setExportInfoPopupOpen(true);
+                          setSelectedSensor(evse);
+                        }}
+                        className=" bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
+                      >
+                        Exportar .csv
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <>
+                  {[...Array(3)].map((_, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
+                    >
+                      <div className="h-6  rounded w-3/4 mb-4 font-bold">Nenhum dado encontrado</div>
+                      <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
+                      <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-5/6 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-2/3 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </main>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
