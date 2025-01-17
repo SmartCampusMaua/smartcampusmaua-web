@@ -662,7 +662,7 @@ const Alarmes = () => {
                             {alarme.triggerType}
                           </p>
                           <p className={`mr-2 font-medium text-black}`}>
-                            <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " :
+                            <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
                               alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
                             {alarme.triggerAt === "higher" ? alarme.trigger :
                               alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
