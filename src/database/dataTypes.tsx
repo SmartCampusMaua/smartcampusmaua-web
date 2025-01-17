@@ -66,7 +66,7 @@ class AlarmeHistory {
   triggerType: string; // boardVoltage
   currentValue: string;
   lastPlayed: Date;
-  actionSensor: string
+  actionSensor: string;
 
   constructor(type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, currentValue: string, lastPlayed: Date, actionSensor: string) {
     this.deveui = deveui;
@@ -92,4 +92,26 @@ class GenericSensor {
   ) { }
 }
 
-export { Alarme, GenericSensor, AlarmeValue, AlarmeHistory }
+class Evse {
+  forwardEnergy: string;
+  connectorId: string;
+  deviceId: string;
+  timestamp: number;
+  
+
+  constructor(
+    forwardEnergy: string,
+    connectorId: string,
+    deviceId: string,
+    timestamp: number,
+
+  ) {
+    this.forwardEnergy = forwardEnergy;
+    this.connectorId = connectorId;
+    this.deviceId = deviceId;
+    this.timestamp = timestamp;
+
+  }
+}
+
+export { Alarme, GenericSensor, AlarmeValue, AlarmeHistory, Evse }

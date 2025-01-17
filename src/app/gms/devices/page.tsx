@@ -66,43 +66,60 @@ const Sensores = () => {
       console.error('Error fetching user data: ', error);
     } else {
       if (triggerType !== "" && triggerAt !== "") {
-        // Proceed with name check only if alarmName is not empty or null
-        if (alarmName && alarmName.trim() !== "") {
-          const { data: existingAlarms, error: checkError } = await supabase
-            .from('Alarms')
-            .select('alarmName')
-            .eq('alarmName', alarmName)
-            .single();
+        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
+        const userEmailResponse = await response.json();
+        const userEmail = userEmailResponse.displayName;
 
-          if (checkError) {
-            console.error('Error checking alarm name: ', checkError);
-          } else if (existingAlarms) {
-            alert('Um alarme com esse nome já existe!');
-            setAlarmInsertAttempt(false);
-            return;
+        const { data: userData, error } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', userEmail);
+
+        if (error) {
+          console.error('Error fetching user data: ', error);
+        } else {
+          var alarmAlreadyExists = false
+
+          if (alarmName && alarmName.trim() !== "") {
+            const { data: existingAlarms, error } = await supabase
+              .from('Alarms')
+              .select('alarmName')
+              .eq('userId', userData[0].id)
+
+            existingAlarms.forEach(existingAlarm => {
+              if (existingAlarm.alarmName === alarmName) {
+                alarmAlreadyExists = true
+                alert("Você já possuí um alarme com o nome escolhido")
+              }
+            });
+          }
+
+          if (!alarmAlreadyExists) {
+            const { error } = await supabase
+              .from('Alarms')
+              .insert({
+                userId: userData[0].id,
+                type: alarmSensor.type,
+                local: alarmSensor.local,
+                deveui: alarmSensor.tags[0],
+                trigger: trigger,
+                triggerAt: triggerAt,
+                triggerType: triggerType,
+                alreadyPlayed: false,
+                actionSensor: actionSensor,
+                alarmName: alarmName
+              })
+            if (error) {
+              console.error('Erro ao atualizar alarme no banco de dados', error);
+            } else {
+              setAlarmInsertAttempt(false);
+              setAlarmPopupOpen(false);
+            }
           }
         }
-        const { data, error } = await supabase.from('Alarms').insert([
-          {
-            userId: userData[0].id,
-            alarmName: alarmName,
-            type: alarmSensor.type,
-            local: alarmSensor.local,
-            deveui: alarmSensor.tags[0],
-            trigger: trigger,
-            triggerAt: triggerAt,
-            triggerType: triggerType,
-            alreadyPlayed: false,
-            actionSensor: actionSensor
-          },
-        ]);
-        if (!error) {
-          setAlarmInsertAttempt(false);
-          setAlarmPopupOpen(false);
-        }
-      }
+      };
     }
-  };
+  }
 
   const addSensorToList = (sensor) => {
     const isSensorAlreadyAdded = selectedSensorsExport.some(existingSensor => existingSensor.name === sensor.name);
