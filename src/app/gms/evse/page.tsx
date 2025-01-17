@@ -194,7 +194,7 @@ export default function Home() {
                   {selectedSensor.chargePointId || "Nome não disponível"}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  Local: {selectedSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Centro Acadêmico" : "Bloco B"}
+                  Local: {selectedSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : "Centro Acadêmico"}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
                   DEVEUI: {selectedSensor.deviceId}
@@ -287,7 +287,8 @@ export default function Home() {
                     <h2 className="text-xl font-semibold mb-2">
                       Dispositivo: {evse.deviceId}
                     </h2>
-                    <p><strong>Foward Energy:</strong> {evse.forwardEnergy} KWh</p>
+                    <p><strong>Forward Energy:</strong> {parseFloat(evse.forwardEnergy).toFixed(4)} KWh</p>
+                    <p><strong>Local: </strong> {evse.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : ( evse.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}</p>
                     <p>
                       <strong>Type:</strong>{evse.connectorId.replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
                     <p><strong>Atualizado por último:</strong> {new Date(evse.timestamp * 1000).toLocaleString()}</p>
