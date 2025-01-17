@@ -107,7 +107,7 @@ const Layout = ({ children }) => {
           style={{ height: 'calc(100vh - 56px)' }}>
           <div className="flex h-full flex-col justify-between space-y-16">
             <div className="space-y-4">
-              <p className="pl-3 font-medium dark:text-white">Sensores</p>
+              <p className="pl-3 font-medium dark:text-white">DISPOSITIVOS</p>
               <div className="flex flex-col space-y-4">
                 <a
                   href="/gms/devices"
@@ -134,20 +134,7 @@ const Layout = ({ children }) => {
                   </g>
                   </svg>
                   <span>EVSE</span>
-                </a>
-                <a
-                  href="/gms/post"
-                  className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition  ${pathname === "/post" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
-                    }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                    <path
-                      fill="currentColor"
-                      d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2m-3-3h6c.55 0 1-.45 1-1s-.45-1-1-1H9c-.55 0-1 .45-1 1s.45 1 1 1m3-17C7.86 2 4.5 5.36 4.5 9.5c0 3.82 2.66 5.86 3.77 6.5h7.46c1.11-.64 3.77-2.68 3.77-6.5C19.5 5.36 16.14 2 12 2"
-                    />
-                  </svg>
-                  <span>POST PAGE</span>
-                </a>
+                </a> 
               </div>
               <p className="pl-3 font-medium dark:text-white">Alarme</p>
               <div className="mt-4 flex flex-col space-y-3">
@@ -166,7 +153,25 @@ const Layout = ({ children }) => {
                   <span>ALARMES</span></a
                 >
               </div>
+              <div className="flex flex-col space-y-4">
+              <a
+                  href="/gms/actuator"
+                  className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition  ${pathname === "/post" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
+                    }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2m-3-3h6c.55 0 1-.45 1-1s-.45-1-1-1H9c-.55 0-1 .45-1 1s.45 1 1 1m3-17C7.86 2 4.5 5.36 4.5 9.5c0 3.82 2.66 5.86 3.77 6.5h7.46c1.11-.64 3.77-2.68 3.77-6.5C19.5 5.36 16.14 2 12 2"
+                    />
+                  </svg>
+                  <span>ATUADORES</span>
+                </a>
+                
+              </div>
+              
             </div>
+            
             <div>
               <a
                 className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition ${pathname.match(/settings/g) ? 'water-button-pressed' : 'water-button-unpressed'}`}

@@ -64,9 +64,24 @@ const Sensores = () => {
 
     if (error) {
       console.error('Error fetching user data: ', error);
-    }
-    else {
+    } else {
       if (triggerType !== "" && triggerAt !== "") {
+        // Proceed with name check only if alarmName is not empty or null
+        if (alarmName && alarmName.trim() !== "") {
+          const { data: existingAlarms, error: checkError } = await supabase
+            .from('Alarms')
+            .select('alarmName')
+            .eq('alarmName', alarmName)
+            .single();
+
+          if (checkError) {
+            console.error('Error checking alarm name: ', checkError);
+          } else if (existingAlarms) {
+            alert('Um alarme com esse nome já existe!');
+            setAlarmInsertAttempt(false);
+            return;
+          }
+        }
         const { data, error } = await supabase.from('Alarms').insert([
           {
             userId: userData[0].id,
@@ -87,7 +102,7 @@ const Sensores = () => {
         }
       }
     }
-  }
+  };
 
   const addSensorToList = (sensor) => {
     const isSensorAlreadyAdded = selectedSensorsExport.some(existingSensor => existingSensor.name === sensor.name);

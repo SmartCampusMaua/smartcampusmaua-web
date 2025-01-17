@@ -350,6 +350,22 @@ const Alarmes = () => {
   };
 
   const handleEditAlarm = async (editedAlarme: AlarmeValue) => {
+    if (editedAlarme.alarmName && editedAlarme.alarmName.trim() !== "") {
+      const { data: existingAlarms, error: checkError } = await supabase
+        .from('Alarms')
+        .select('alarmName')
+        .eq('alarmName', editedAlarme.alarmName)
+        .neq('id', editedAlarme.id)
+        .single();
+  
+      if (checkError) {
+        console.error('Error checking alarm name: ', checkError);
+        return;
+      } else if (existingAlarms) {
+        alert('Um alarme com esse nome já existe!');
+        return;
+      }
+    }
     const { error } = await supabase
       .from('Alarms')
       .update({
@@ -368,6 +384,7 @@ const Alarmes = () => {
       console.error('Erro ao atualizar alarme no banco de dados', error);
     }
   };
+  
 
   const [alarmError, setAlarmError] = useState<boolean>(false);
   function updateAlarm() {
