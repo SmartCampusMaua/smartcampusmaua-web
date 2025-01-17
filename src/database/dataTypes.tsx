@@ -38,10 +38,10 @@ class AlarmeValue {
   triggerAt: string; // higher / lower than trigger
   triggerType: string; // boardVoltage
   alreadyPlayed: boolean;
-  currentValue: number;
+  currentValue: string;
   actionSensor: string
 
-  constructor(id: number, alarmName: string, userId: number, type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, alreadyPlayed: boolean, currentValue: number, actionSensor: string) {
+  constructor(id: number, alarmName: string, userId: number, type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, alreadyPlayed: boolean, currentValue: string, actionSensor: string) {
     this.id = id;
     this.alarmName = alarmName;
     this.userId = userId;
@@ -64,11 +64,11 @@ class AlarmeHistory {
   trigger: string;
   triggerAt: string; // higher / lower than trigger
   triggerType: string; // boardVoltage
-  currentValue: number;
+  currentValue: string;
   lastPlayed: Date;
   actionSensor: string
 
-  constructor(type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, currentValue: number, lastPlayed: Date, actionSensor: string) {
+  constructor(type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, currentValue: string, lastPlayed: Date, actionSensor: string) {
     this.deveui = deveui;
     this.trigger = trigger;
     this.triggerAt = triggerAt;

@@ -12,6 +12,7 @@
 		"@supabase/ssr": "^0.5.2",
 		"@supabase/supabase-js": "^2.47.10",
 		"chart.js": "^4.4.7",
+		"cookie": "^1.0.2",
 		"date-fns": "^4.1.0",
 		"mqtt": "^5.10.3",
 		"n": "^9.2.1",

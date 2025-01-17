@@ -272,8 +272,31 @@ const Alarmes = () => {
                     currentValue = getNumericValue(sensor.fields[8]).toFixed(1);
                     break;
                   }
+                  case "solenoid1": {
+                    currentValue = sensor.fields[2];
+                    break;
+                  }
+                  case "solenoid2": {
+                    currentValue = sensor.fields[3];
+                    break;
+                  }
+                  case "solenoid3": {
+                    currentValue = sensor.fields[4];
+                    break;
+                  }
+                  case "soilMoistureDepthLevel1": {
+                    currentValue = getNumericValue(sensor.fields[1]);
+                    break;
+                  }
+                  case "soilMoistureDepthLevel2": {
+                    currentValue = getNumericValue(sensor.fields[2]);
+                    break;
+                  }
+                  case "soilMoistureDepthLevel3": {
+                    currentValue = getNumericValue(sensor.fields[3]);
+                    break;
+                  }
                 }
-
               }
             });
             newAlarmes.push(new AlarmeValue(
@@ -420,6 +443,7 @@ const Alarmes = () => {
 
           alarms.push(newAlarm)
         });
+        alarms.reverse()
         setAlarmHistory(alarms)
       }
     }
@@ -460,10 +484,21 @@ const Alarmes = () => {
                       <strong>Valor escolhido:</strong> {selectedAlarme.triggerType}
                     </li>
                     <li>
-                      <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " : "Abaixo de "}{selectedAlarme.trigger}
+                      <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " :
+                        selectedAlarme.triggerAt === "lower" ? "Abaixo de " : selectedAlarme.triggerAt === "true" ? "Em " : " Em "}
+                      {selectedAlarme.triggerAt === "higher" ? selectedAlarme.trigger :
+                        selectedAlarme.triggerAt === "lower" ? selectedAlarme.trigger : selectedAlarme.triggerAt === "true" ? selectedAlarme.triggerAt : selectedAlarme.triggerAt}
                     </li>
                     <li>
-                      <strong>Valor atual:</strong> {selectedAlarme.currentValue}
+                      {
+                        selectedAlarme.triggerAt === "true" || selectedAlarme.triggerAt === "false" ? (
+                          <div></div>
+                        ) : (
+                          <>
+                            <strong>Valor atual:</strong> {selectedAlarme.trigger}
+                          </>
+                        )
+                      }
                     </li>
                     <li>
                       <strong>Ação ao disparar o alarme:</strong> {selectedAlarme.actionSensor}
@@ -519,16 +554,43 @@ const Alarmes = () => {
                       <option value={"emwTemperature"}> Temperatura</option>
                       <option value={"emwUv"}> Índice UV</option>
                     </select>
+                  ) : selectedAlarme.type === "Sprinkler" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"boardVoltage"}> boardVoltage</option>
+                      <option value={"counter"}> Contador</option>
+                      <option value={"solenoid1"}> Solenoide 1</option>
+                      <option value={"solenoid2"}> Solenoide 2</option>
+                      <option value={"solenoid3"}> Solenoide 3</option>
+                    </select>
+                  ) : selectedAlarme.type === "SoilMoisture3DepthLevels" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"boardVoltage"}> boardVoltage</option>
+                      <option value={"soilMoistureDepthLevel1"}> Humidade 10 cm</option>
+                      <option value={"soilMoistureDepthLevel2"}> Humidade 30 cm</option>
+                      <option value={"soilMoistureDepthLevel3"}> Humidade 70 cm</option>
+                    </select>
                   ) : (
                     <p></p>
                   )}
-                  <p className="">Quando tocar</p>
+                  <p className="mt-2">Quando tocar</p>
                   <div className="flex">
-                    <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
-                      <option value={"higher"}> Acima de</option>
-                      <option value={"lower"}> Abaixo de</option>
-                    </select>
-                    <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
+                    {(triggerType === "solenoid1" || triggerType === "solenoid2" || triggerType === "solenoid3") ? (
+                      <div>
+                        <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                          <option value={"true"}> True</option>
+                          <option value={"false"}> False</option>
+                        </select>
+                      </div>) : (
+                      <div>
+                        <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                          <option value={"higher"}> Acima de</option>
+                          <option value={"lower"}> Abaixo de</option>
+                        </select>
+                        <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
+                      </div>
+                    )}
                   </div>
                   <p className="mt-2">Ação ao disparar o alarme</p>
                   <div className="flex">
@@ -540,7 +602,7 @@ const Alarmes = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => { updateAlarm()}}
+                  onClick={() => { updateAlarm() }}
                   className="m-2 bg-blue-500 text-white px-3 py-1 rounded h-8 text-lg font-bold hover:bg-blue-700"
                 >Editar alarme</button>
               </div>
@@ -600,7 +662,10 @@ const Alarmes = () => {
                             {alarme.triggerType}
                           </p>
                           <p className={`mr-2 font-medium text-black}`}>
-                          <strong>Tocar:</strong> {alarme.triggerAt == 'higher' ? "Acima de " : "Abaixo de "}{alarme.trigger}{
+                            <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " :
+                              alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
+                            {alarme.triggerAt === "higher" ? alarme.trigger :
+                              alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
                               alarme.triggerType === "boardVoltage" ? "V" :
                                 alarme.triggerType === "batteryVoltage" ? "V" :
                                   alarme.triggerType === "humidity" ? "%" :
@@ -616,29 +681,43 @@ const Alarmes = () => {
                                                       alarme.triggerType === "emwGustWindSpeed" ? " m/s" :
                                                         alarme.triggerType === "emwRainLevel" ? " mm" :
                                                           alarme.triggerType === "emwSolarRadiation" ? " W/m²" :
-                                                            alarme.triggerType === "emwUv" ? " UV" : ""
+                                                            alarme.triggerType === "emwUv" ? " UV" :
+                                                              alarme.triggerType === "solenoid1" ? "" :
+                                                                alarme.triggerType === "solenoid2" ? "" :
+                                                                  alarme.triggerType === "solenoid3" ? "" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                      alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                        alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
                             }
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
-                            <strong>Valor durante:</strong> {String(alarme.currentValue)}{
-                            alarme.triggerType === "boardVoltage" ? "V" :
-                              alarme.triggerType === "batteryVoltage" ? "V" :
-                                alarme.triggerType === "humidity" ? "%" :
-                                  alarme.triggerType === "luminosity" ? " lux" :
-                                    alarme.triggerType === "temperature" ? "°C" :
-                                      alarme.triggerType === "movement" ? "" :
-                                        alarme.triggerType === "distance" ? " m" :
-                                          alarme.triggerType === "counter" ? "" :
-                                            alarme.triggerType === "forwardEnergy" ? " kWh" :
-                                              alarme.triggerType === "reverseEnergy" ? " kWh" :
-                                                alarme.triggerType === "emwAtmPres" ? " atm" :
-                                                  alarme.triggerType === "windSpeed" ? " m/s" :
-                                                    alarme.triggerType === "windGustSpeed" ? " m/s" :
-                                                      alarme.triggerType === "rainLevel" ? " mm" :
-                                                        alarme.triggerType === "solarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "uvIndex" ? "" :
-                                                            ""
-                          }
+                            {
+                              alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
+                                <div></div>
+                              ) : (
+                                <>
+                                  <strong>Valor durante:</strong> {String(alarme.currentValue)}{
+                                    alarme.triggerType === "boardVoltage" ? "V" :
+                                      alarme.triggerType === "batteryVoltage" ? "V" :
+                                        alarme.triggerType === "humidity" ? "%" :
+                                          alarme.triggerType === "luminosity" ? " lux" :
+                                            alarme.triggerType === "temperature" ? "°C" :
+                                              alarme.triggerType === "movement" ? "" :
+                                                alarme.triggerType === "distance" ? " m" :
+                                                  alarme.triggerType === "counter" ? "" :
+                                                    alarme.triggerType === "forwardEnergy" ? " kWh" :
+                                                      alarme.triggerType === "reverseEnergy" ? " kWh" :
+                                                        alarme.triggerType === "emwAtmPres" ? " atm" :
+                                                          alarme.triggerType === "windSpeed" ? " m/s" :
+                                                            alarme.triggerType === "windGustSpeed" ? " m/s" :
+                                                              alarme.triggerType === "rainLevel" ? " mm" :
+                                                                alarme.triggerType === "solarRadiation" ? " W/m²" :
+                                                                  alarme.triggerType === "uvIndex" ? "" :
+                                                                    ""
+                                  }
+                                </>
+                              )
+                            }
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
                             <strong>Tocou em:</strong> {alarme.lastPlayed.toLocaleDateString("pt-br", {
@@ -651,7 +730,7 @@ const Alarmes = () => {
                             })}
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
-                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor): "Sem ação definida"} 
+                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : "Sem ação definida"}
                           </p>
                         </h1>
                       </div>
@@ -665,7 +744,8 @@ const Alarmes = () => {
           <div className="flex-col space-around justify-center items-center p-8">
             <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {alarmes.map((alarme, index) => {
-                const isTriggered = alarme.triggerAt == "higher" ? alarme.currentValue > Number(alarme.trigger) : alarme.currentValue < Number(alarme.trigger);
+                const isTriggered = alarme.triggerAt == "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt == "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
+                  alarme.triggerAt == "true" ? alarme.currentValue === "true" : alarme.currentValue === "false";
                 return (
                   <div
                     key={index}
@@ -687,7 +767,7 @@ const Alarmes = () => {
                           whiteSpace: "nowrap",
                           textOverflow: "ellipsis",
                         }}
-                        title={alarme.alarmName} 
+                        title={alarme.alarmName}
                       >
                         {alarme.alarmName || "Sem nome"}
                       </p>
@@ -727,7 +807,10 @@ const Alarmes = () => {
                           {alarme.triggerType}
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          <strong>Tocar:</strong> {alarme.triggerAt == 'higher' ? "Acima de " : "Abaixo de "}{alarme.trigger}{
+                          <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
+                            alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
+                          {alarme.triggerAt === "higher" ? alarme.trigger :
+                            alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
                             alarme.triggerType === "boardVoltage" ? "V" :
                               alarme.triggerType === "batteryVoltage" ? "V" :
                                 alarme.triggerType === "humidity" ? "%" :
@@ -743,32 +826,50 @@ const Alarmes = () => {
                                                     alarme.triggerType === "emwGustWindSpeed" ? " m/s" :
                                                       alarme.triggerType === "emwRainLevel" ? " mm" :
                                                         alarme.triggerType === "emwSolarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "emwUv" ? " UV" : ""
+                                                          alarme.triggerType === "emwUv" ? " UV" :
+                                                            alarme.triggerType === "solenoid1" ? "" :
+                                                              alarme.triggerType === "solenoid2" ? "" :
+                                                                alarme.triggerType === "solenoid3" ? "" :
+                                                                  alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          <strong>Valor atual:</strong> {String(alarme.currentValue)}{
-                            alarme.triggerType === "boardVoltage" ? "V" :
-                              alarme.triggerType === "batteryVoltage" ? "V" :
-                                alarme.triggerType === "humidity" ? "%" :
-                                  alarme.triggerType === "luminosity" ? " lux" :
-                                    alarme.triggerType === "temperature" ? "°C" :
-                                      alarme.triggerType === "movement" ? "" :
-                                        alarme.triggerType === "distance" ? " m" :
-                                          alarme.triggerType === "counter" ? "" :
-                                            alarme.triggerType === "forwardEnergy" ? " kWh" :
-                                              alarme.triggerType === "reverseEnergy" ? " kWh" :
-                                                alarme.triggerType === "emwAtmPres" ? " atm" :
-                                                  alarme.triggerType === "windSpeed" ? " m/s" :
-                                                    alarme.triggerType === "windGustSpeed" ? " m/s" :
-                                                      alarme.triggerType === "rainLevel" ? " mm" :
-                                                        alarme.triggerType === "solarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "uvIndex" ? "" :
-                                                            ""
+                          {
+                            alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
+                              <>
+                                <strong>Valor atual:</strong> {alarme.currentValue}
+                              </>
+                            ) : (
+                              <>
+                                <strong>Valor atual:</strong> {String(alarme.currentValue)}{
+                                  alarme.triggerType === "boardVoltage" ? "V" :
+                                    alarme.triggerType === "batteryVoltage" ? "V" :
+                                      alarme.triggerType === "humidity" ? "%" :
+                                        alarme.triggerType === "luminosity" ? " lux" :
+                                          alarme.triggerType === "temperature" ? "°C" :
+                                            alarme.triggerType === "movement" ? "" :
+                                              alarme.triggerType === "distance" ? " m" :
+                                                alarme.triggerType === "counter" ? "" :
+                                                  alarme.triggerType === "forwardEnergy" ? " kWh" :
+                                                    alarme.triggerType === "reverseEnergy" ? " kWh" :
+                                                      alarme.triggerType === "emwAtmPres" ? " atm" :
+                                                        alarme.triggerType === "windSpeed" ? " m/s" :
+                                                          alarme.triggerType === "windGustSpeed" ? " m/s" :
+                                                            alarme.triggerType === "rainLevel" ? " mm" :
+                                                              alarme.triggerType === "solarRadiation" ? " W/m²" :
+                                                                alarme.triggerType === "uvIndex" ? "" :
+                                                                  alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
+                                }
+                              </>
+                            )
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida" }
+                          <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
                         </p>
                         <button
                           onClick={() => getAlarmHistory(alarme)}
