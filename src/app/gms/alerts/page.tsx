@@ -349,51 +349,78 @@ const Alarmes = () => {
     setAlarmEditPopupOpen(true);
   };
 
-  const handleEditAlarm = async (editedAlarme: AlarmeValue) => {
-    if (editedAlarme.alarmName && editedAlarme.alarmName.trim() !== "") {
-      const { data: existingAlarms, error: checkError } = await supabase
-        .from('Alarms')
-        .select('alarmName')
-        .eq('alarmName', editedAlarme.alarmName)
-        .neq('id', editedAlarme.id)
-        .single();
-  
-      if (checkError) {
-        console.error('Error checking alarm name: ', checkError);
-        return;
-      } else if (existingAlarms) {
-        alert('Um alarme com esse nome já existe!');
-        return;
+  const [alarmError, setAlarmError] = useState<boolean>(false);
+
+  const handleEditAlarm = async (editedAlarme: AlarmeValue): Promise<boolean> => {
+    try {
+      const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
+      const userEmailResponse = await response.json();
+      const userEmail = userEmailResponse.displayName;
+
+      const { data: userData, error } = await supabase
+        .from('User')
+        .select('id')
+        .eq('email', userEmail);
+
+      if (error) {
+        console.error('Error fetching user data: ', error);
+        return false;
       }
-    }
-    const { error } = await supabase
-      .from('Alarms')
-      .update({
-        type: editedAlarme.type,
-        alarmName: editedAlarme.alarmName,
-        local: editedAlarme.local,
-        deveui: editedAlarme.deveui,
-        trigger: editedAlarme.trigger,
-        triggerAt: editedAlarme.triggerAt,
-        triggerType: editedAlarme.triggerType,
-        alreadyPlayed: editedAlarme.alreadyPlayed,
-        actionSensor: editedAlarme.actionSensor
-      })
-      .eq('id', editedAlarme.id);
-    if (error) {
-      console.error('Erro ao atualizar alarme no banco de dados', error);
+
+      if (editedAlarme.alarmName && editedAlarme.alarmName.trim() !== "") {
+        const { data: existingAlarms, error } = await supabase
+          .from('Alarms')
+          .select('alarmName')
+          .eq('userId', userData[0].id);
+
+        if (error) {
+          console.error('Error fetching existing alarms: ', error);
+          return false;
+        }
+
+        for (const existingAlarm of existingAlarms) {
+          if (
+            existingAlarm.alarmName === editedAlarme.alarmName &&
+            selectedAlarme.alarmName !== editedAlarme.alarmName
+          ) {
+            alert("Você já possuí um alarme com o nome escolhido");
+            return true;
+          }
+        }
+      }
+
+      const { error: updateError } = await supabase
+        .from('Alarms')
+        .update({
+          type: editedAlarme.type,
+          alarmName: editedAlarme.alarmName,
+          local: editedAlarme.local,
+          deveui: editedAlarme.deveui,
+          trigger: editedAlarme.trigger,
+          triggerAt: editedAlarme.triggerAt,
+          triggerType: editedAlarme.triggerType,
+          alreadyPlayed: editedAlarme.alreadyPlayed,
+          actionSensor: editedAlarme.actionSensor,
+        })
+        .eq('id', editedAlarme.id);
+
+      if (updateError) {
+        console.error('Erro ao atualizar alarme no banco de dados', updateError);
+        return false;
+      }
+
+      return false;
+    } catch (err) {
+      console.error('Unexpected error in handleEditAlarm:', err);
+      return false;
     }
   };
-  
 
-  const [alarmError, setAlarmError] = useState<boolean>(false);
-  function updateAlarm() {
+  async function updateAlarm() {
     if (selectedAlarme.triggerType === "") {
       setAlarmError(true);
       return;
     }
-
-    setAlarmError(false);
 
     const updatedAlarme = new AlarmeValue(
       selectedAlarme.id,
@@ -407,13 +434,20 @@ const Alarmes = () => {
       triggerType,
       selectedAlarme.alreadyPlayed,
       selectedAlarme.currentValue,
-      actionSensor,
+      actionSensor
     );
 
-    handleEditAlarm(updatedAlarme);
-    setAlarmEditPopupOpen(false);
-    setSendingNewAlarm(true); // Atualiza alarmes, mais fácil fazer o fetch no supabase outra vez do que atualizar os valores pelos sensores
+    const hasError = await handleEditAlarm(updatedAlarme);
+
+    if (!hasError) {
+      setAlarmEditPopupOpen(false);
+      setSendingNewAlarm(true);
+      setAlarmError(false);
+    } else {
+      setAlarmError(true);
+    }
   }
+
 
   const [historyPopupOpen, setHistoryPopupOpen] = useState<boolean>(false);
   const [alarmHistory, setAlarmHistory] = useState<AlarmeHistory[]>([])
@@ -447,7 +481,6 @@ const Alarmes = () => {
 
           const newAlarm = new AlarmeHistory(
             userAlarmHistory.type,
-            // userAlarmHistory.alarmName,
             userAlarmHistory.local,
             userAlarmHistory.deveui,
             userAlarmHistory.trigger,
@@ -530,7 +563,6 @@ const Alarmes = () => {
                     Digite um nome para o seu alarme:
                   </p>
                   <input type="text" id="alarmName" className="mx-1 w-100 border border-black rounded p-1 text-lg m-2" placeholder="Nome" value={alarmName} onChange={(event) => setAlarmName(event.target.value)} />
-
                   <p>
                     Escolha o campo para o alarme
                   </p>
@@ -626,7 +658,7 @@ const Alarmes = () => {
             </div>
             <div className="mt-4 text-5xl text-center font-bold">
               {alarmError ? (
-                <p className="text-red-500">Insira todos os dados</p>
+                <p className="text-red-500">Insira todos os dados corretamente</p>
               ) : (
                 <p></p>
               )}
