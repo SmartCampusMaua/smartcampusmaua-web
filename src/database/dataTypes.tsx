@@ -89,33 +89,24 @@ class GenericSensor {
 }
 
 class Evse {
-  measurement: string;
+  forwardEnergy: string;
   connectorId: string;
-  startMeter: string;
-  transactionId: string;
-  startTime: string;
-  idTag: string;
   deviceId: string;
-  timestamp: string;
+  timestamp: number;
+  
 
   constructor(
-    measurement: string,
+    forwardEnergy: string,
     connectorId: string,
-    startMeter: string,
-    transactionId: string,
-    startTime: string,
-    idTag: string,
     deviceId: string,
-    timestamp: string,
+    timestamp: number,
+
   ) {
-    this.measurement = measurement;
+    this.forwardEnergy = forwardEnergy;
     this.connectorId = connectorId;
-    this.startMeter = startMeter;
-    this.transactionId = transactionId;
-    this.startTime = startTime;
-    this.idTag = idTag;
     this.deviceId = deviceId;
     this.timestamp = timestamp;
+
   }
 }
 
