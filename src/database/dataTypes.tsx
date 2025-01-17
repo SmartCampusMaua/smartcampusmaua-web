@@ -1,5 +1,6 @@
 class Alarme {
   id: number;
+  alarmName: string;
   userId: number;
   type: string; // Smartlight
   local: string;
@@ -11,8 +12,9 @@ class Alarme {
   actionSensor: string
 
 
-  constructor(id: number, userId: number, type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, alreadyPlayed: boolean, actionSensor: string) {
+  constructor(id: number, alarmName: string, userId: number, type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, alreadyPlayed: boolean, actionSensor: string) {
     this.id = id;
+    this.alarmName = alarmName;
     this.userId = userId;
     this.deveui = deveui;
     this.trigger = trigger;
@@ -27,6 +29,7 @@ class Alarme {
 
 class AlarmeValue {
   id: number;
+  alarmName: string;
   userId: number;
   type: string; // Smartlight
   local: string;
@@ -38,8 +41,9 @@ class AlarmeValue {
   currentValue: number;
   actionSensor: string
 
-  constructor(id: number, userId: number, type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, alreadyPlayed: boolean, currentValue: number, actionSensor: string) {
+  constructor(id: number, alarmName: string, userId: number, type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, alreadyPlayed: boolean, currentValue: number, actionSensor: string) {
     this.id = id;
+    this.alarmName = alarmName;
     this.userId = userId;
     this.deveui = deveui;
     this.trigger = trigger;
