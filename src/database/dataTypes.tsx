@@ -93,6 +93,7 @@ class GenericSensor {
 }
 
 class Evse {
+  chargePointId: string;
   forwardEnergy: string;
   connectorId: string;
   deviceId: string;
@@ -100,12 +101,14 @@ class Evse {
   
 
   constructor(
+    chargePointId: string,
     forwardEnergy: string,
     connectorId: string,
     deviceId: string,
     timestamp: number,
 
   ) {
+    this.chargePointId = chargePointId;
     this.forwardEnergy = forwardEnergy;
     this.connectorId = connectorId;
     this.deviceId = deviceId;
