@@ -6,6 +6,8 @@ const apiUrlWaterTankLevel = "https://smartcampus-k8s.maua.br/api/timeseries/v0.
 const apiUrlHydrometer = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Hydrometer/all?interval=30";
 const apiUrlEnergyMeter = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/EnergyMeter/all?interval=30";
 const apiUrlWeatherStation = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/WeatherStation/all?interval=30";
+const apiUrlSprinkler = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Sprinkler/all?interval=30";
+const apiUrlSoilMoisture3DepthLevels = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/SoilMoisture3DepthLevels/all?interval=30";
 
 async function fetchSmartLight() {
   const response = await fetch(apiUrlSmartLight);
@@ -42,6 +44,20 @@ async function fetchWeatherStation() {
 
   return data;
 }
+async function fetchSprinkler() {
+  const response = await fetch(apiUrlSprinkler);
+
+  const data = await response.json();
+
+  return data;
+}
+async function fetchSoilMoisture3DepthLevels() {
+  const response = await fetch(apiUrlSoilMoisture3DepthLevels);
+
+  const data = await response.json();
+
+  return data;
+}
 
 async function fetchAllSensors() {
   const luzes = await fetchSmartLight();
@@ -49,12 +65,16 @@ async function fetchAllSensors() {
   const hydrometer = await fetchHydrometer();
   const energyMeter = await fetchEnergyMeter();
   const weatherStation = await fetchWeatherStation();
+  const sprinkler = await fetchSprinkler();
+  const soilMoisture = await fetchSoilMoisture3DepthLevels();
 
   return [...luzes,
   ...waterTanklevel,
   ...hydrometer,
   ...energyMeter,
-  ...weatherStation];
+  ...weatherStation,
+  ...sprinkler,
+  ...soilMoisture];
 };
 
 const sanitize = (value: any) => (value === "" || value === null ? "Indisponível" : value);
@@ -63,7 +83,7 @@ const fetchSensors = async () => {
   const { data: sensorsInfo, error } = await supabase
     .from('Sensors')
     .select("Nome, DEVEUI, Local, Tipo");
-  
+
   if (error) {
     console.error('Error fetching sensors data: ', error);
     return;
@@ -215,7 +235,7 @@ const fetchSensors = async () => {
             newSensor = new GenericSensor(
               sanitize(sensorInfo.Nome),
               sensorData.name,
-              [           
+              [
                 sanitize(sensorData.fields.emwAtmPres) + " atm",
                 sanitize(sensorData.fields.emwAvgWindSpeed) + " m/s",
                 sanitize(sensorData.fields.emwGustWindSpeed) + " m/s",
@@ -224,7 +244,7 @@ const fetchSensors = async () => {
                 sanitize(sensorData.fields.emwRainLevel) + " mm",
                 sanitize(sensorData.fields.emwSolarRadiation) + " W/m²",
                 sanitize(sensorData.fields.emwTemperature) + " °C",
-                sanitize(sensorData.fields.emwUv) + " UV index",    
+                sanitize(sensorData.fields.emwUv) + " UV index",
               ],
               [sanitize(sensorData.tags.deviceId)],
               sanitize(sensorInfo.Local),
@@ -246,7 +266,77 @@ const fetchSensors = async () => {
               sanitize(sensorData.fields.emwRainLevel) + " mm",
               sanitize(sensorData.fields.emwSolarRadiation) + " W/m²",
               sanitize(sensorData.fields.emwTemperature) + " °C",
-              sanitize(sensorData.fields.emwUv) + " UV index",   
+              sanitize(sensorData.fields.emwUv) + " UV index",
+            ],
+            [sanitize(sensorData.tags.deviceId)],
+            "Indisponível",
+            new Date(Number(sensorData.timestamp) / 1e6)
+          );
+        }
+      } else if (sensorData.name === "Sprinkler") {
+        sensorsInfo.forEach(sensorInfo => {
+          if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
+            newSensor = new GenericSensor(
+              sanitize(sensorInfo.Nome),
+              sensorData.name,
+              [
+                sanitize(sensorData.fields.boardVoltage) + " V",
+                sanitize(sensorData.fields.counter),
+                sanitize((sensorData.fields.solenoid1).toString()),
+                sanitize((sensorData.fields.solenoid2).toString()),
+                sanitize((sensorData.fields.solenoid3).toString()),
+              ],
+              [sanitize(sensorData.tags.deviceId)],
+              sanitize(sensorInfo.Local),
+              new Date(Number(sensorData.timestamp) / 1e6)
+            );
+            sensorAlreadyExists = true;
+          }
+        });
+        if (!sensorAlreadyExists) {
+          newSensor = new GenericSensor(
+            "Indisponível",
+            sensorData.name,
+            [
+              sanitize(sensorData.fields.boardVoltage) + " V",
+              sanitize(sensorData.fields.counter),
+              sanitize((sensorData.fields.solenoid1).toString()),
+              sanitize((sensorData.fields.solenoid2).toString()),
+              sanitize((sensorData.fields.solenoid3).toString()),
+            ],
+            [sanitize(sensorData.tags.deviceId)],
+            "Indisponível",
+            new Date(Number(sensorData.timestamp) / 1e6)
+          );
+        }
+      } else if (sensorData.name === "SoilMoisture3DepthLevels") {
+        sensorsInfo.forEach(sensorInfo => {
+          if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
+            newSensor = new GenericSensor(
+              sanitize(sensorInfo.Nome),
+              sensorData.name,
+              [
+                sanitize(sensorData.fields.boardVoltage) + " V",
+                sanitize((Number(sensorData.fields.soilMoistureDepthLevel1) / 100).toFixed(0)) + " %",
+                sanitize((Number(sensorData.fields.soilMoistureDepthLevel2) / 100).toFixed(0)) + " %",
+                sanitize((Number(sensorData.fields.soilMoistureDepthLevel3) / 100).toFixed(0)) + " %",
+              ],
+              [sanitize(sensorData.tags.deviceId)],
+              sanitize(sensorInfo.Local),
+              new Date(Number(sensorData.timestamp) / 1e6)
+            );
+            sensorAlreadyExists = true;
+          }
+        });
+        if (!sensorAlreadyExists) {
+          newSensor = new GenericSensor(
+            "Indisponível",
+            sensorData.name,
+            [
+              sanitize(sensorData.fields.boardVoltage) + " V",
+              sanitize((Number(sensorData.fields.soilMoistureDepthLevel1) / 100).toFixed(0)) + " %",
+              sanitize((Number(sensorData.fields.soilMoistureDepthLevel2) / 100).toFixed(0)) + " %",
+              sanitize((Number(sensorData.fields.soilMoistureDepthLevel3) / 100).toFixed(0)) + " %",
             ],
             [sanitize(sensorData.tags.deviceId)],
             "Indisponível",

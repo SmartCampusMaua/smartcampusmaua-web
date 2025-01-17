@@ -19,6 +19,7 @@ const Alarmes = () => {
   const [trigger, setTrigger] = useState<string>('0');
   const [triggerAt, setTriggerAt] = useState<string>('higher');
   const [actionSensor, setActionSensor] = useState<string>();
+  const [alarmName, setAlarmName] = useState<string>()
   const [sensors, setSensors] = useState<GenericSensor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedAlarme, setSelectedAlarme] = useState<AlarmeValue>();
@@ -177,7 +178,7 @@ const Alarmes = () => {
       } else {
         const { data: alarmsData, error } = await supabase
           .from('Alarms')
-          .select('id, userId, type, local, deveui, trigger, triggerAt, triggerType, alreadyPlayed, actionSensor')
+          .select('id, alarmName, userId, type, local, deveui, trigger, triggerAt, triggerType, alreadyPlayed, actionSensor')
           .eq('userId', userData[0].id);
 
         if (error) {
@@ -271,12 +272,36 @@ const Alarmes = () => {
                     currentValue = getNumericValue(sensor.fields[8]).toFixed(1);
                     break;
                   }
+                  case "solenoid1": {
+                    currentValue = sensor.fields[2];
+                    break;
+                  }
+                  case "solenoid2": {
+                    currentValue = sensor.fields[3];
+                    break;
+                  }
+                  case "solenoid3": {
+                    currentValue = sensor.fields[4];
+                    break;
+                  }
+                  case "soilMoistureDepthLevel1": {
+                    currentValue = getNumericValue(sensor.fields[1]);
+                    break;
+                  }
+                  case "soilMoistureDepthLevel2": {
+                    currentValue = getNumericValue(sensor.fields[2]);
+                    break;
+                  }
+                  case "soilMoistureDepthLevel3": {
+                    currentValue = getNumericValue(sensor.fields[3]);
+                    break;
+                  }
                 }
-
               }
             });
             newAlarmes.push(new AlarmeValue(
               alarmData.id,
+              alarmData.alarmName,
               alarmData.userId,
               alarmData.type,
               alarmData.local,
@@ -303,6 +328,7 @@ const Alarmes = () => {
     setSelectedSensor(sensor || null);
     const newSelectedAlarme = new AlarmeValue(
       alarme.id,
+      alarme.alarmName,
       alarme.userId,
       alarme.type,
       alarme.local,
@@ -315,6 +341,7 @@ const Alarmes = () => {
       alarme.actionSensor
     );
     setSelectedAlarme(newSelectedAlarme);
+    setAlarmName(newSelectedAlarme.alarmName);
     setTrigger(newSelectedAlarme.trigger);
     setTriggerAt(newSelectedAlarme.triggerAt);
     setTriggerType(newSelectedAlarme.triggerType);
@@ -323,10 +350,27 @@ const Alarmes = () => {
   };
 
   const handleEditAlarm = async (editedAlarme: AlarmeValue) => {
+    if (editedAlarme.alarmName && editedAlarme.alarmName.trim() !== "") {
+      const { data: existingAlarms, error: checkError } = await supabase
+        .from('Alarms')
+        .select('alarmName')
+        .eq('alarmName', editedAlarme.alarmName)
+        .neq('id', editedAlarme.id)
+        .single();
+  
+      if (checkError) {
+        console.error('Error checking alarm name: ', checkError);
+        return;
+      } else if (existingAlarms) {
+        alert('Um alarme com esse nome já existe!');
+        return;
+      }
+    }
     const { error } = await supabase
       .from('Alarms')
       .update({
         type: editedAlarme.type,
+        alarmName: editedAlarme.alarmName,
         local: editedAlarme.local,
         deveui: editedAlarme.deveui,
         trigger: editedAlarme.trigger,
@@ -340,6 +384,7 @@ const Alarmes = () => {
       console.error('Erro ao atualizar alarme no banco de dados', error);
     }
   };
+  
 
   const [alarmError, setAlarmError] = useState<boolean>(false);
   function updateAlarm() {
@@ -352,6 +397,7 @@ const Alarmes = () => {
 
     const updatedAlarme = new AlarmeValue(
       selectedAlarme.id,
+      alarmName,
       selectedAlarme.userId,
       selectedAlarme.type,
       selectedAlarme.local,
@@ -401,6 +447,7 @@ const Alarmes = () => {
 
           const newAlarm = new AlarmeHistory(
             userAlarmHistory.type,
+            // userAlarmHistory.alarmName,
             userAlarmHistory.local,
             userAlarmHistory.deveui,
             userAlarmHistory.trigger,
@@ -413,6 +460,7 @@ const Alarmes = () => {
 
           alarms.push(newAlarm)
         });
+        alarms.reverse()
         setAlarmHistory(alarms)
       }
     }
@@ -422,7 +470,7 @@ const Alarmes = () => {
     <DashboardLayout>
       <div>
         <Head>
-          <title>Alarmes | EcoVision GMS</title>
+          <title>Alarmes</title>
         </Head>
 
         {/* Edição de alarme */}
@@ -443,6 +491,7 @@ const Alarmes = () => {
               <div className="m-2 flex justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
                 <div className="m-2">
                   <p className="font-bold text-3xl text-center">Alarme Selecionado</p>
+                  <strong>Nome do alarme:</strong> {selectedAlarme.alarmName || "Sem nome"}
                   <SensorDetails sensor={selectedSensor} />
                   <ul className="text-sm space-y-2 font-medium">
                     <li>
@@ -452,10 +501,21 @@ const Alarmes = () => {
                       <strong>Valor escolhido:</strong> {selectedAlarme.triggerType}
                     </li>
                     <li>
-                      <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " : "Abaixo de "}{selectedAlarme.trigger}
+                      <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " :
+                        selectedAlarme.triggerAt === "lower" ? "Abaixo de " : selectedAlarme.triggerAt === "true" ? "Em " : " Em "}
+                      {selectedAlarme.triggerAt === "higher" ? selectedAlarme.trigger :
+                        selectedAlarme.triggerAt === "lower" ? selectedAlarme.trigger : selectedAlarme.triggerAt === "true" ? selectedAlarme.triggerAt : selectedAlarme.triggerAt}
                     </li>
                     <li>
-                      <strong>Valor atual:</strong> {selectedAlarme.currentValue}
+                      {
+                        selectedAlarme.triggerAt === "true" || selectedAlarme.triggerAt === "false" ? (
+                          <div></div>
+                        ) : (
+                          <>
+                            <strong>Valor atual:</strong> {selectedAlarme.trigger}
+                          </>
+                        )
+                      }
                     </li>
                     <li>
                       <strong>Ação ao disparar o alarme:</strong> {selectedAlarme.actionSensor}
@@ -466,6 +526,11 @@ const Alarmes = () => {
               <div className="m-2 flex flex-col justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
                 <div className="m-2">
                   <p className="font-bold text-3xl text-center">Editar Alarme</p>
+                  <p>
+                    Digite um nome para o seu alarme:
+                  </p>
+                  <input type="text" id="alarmName" className="mx-1 w-100 border border-black rounded p-1 text-lg m-2" placeholder="Nome" value={alarmName} onChange={(event) => setAlarmName(event.target.value)} />
+
                   <p>
                     Escolha o campo para o alarme
                   </p>
@@ -506,16 +571,43 @@ const Alarmes = () => {
                       <option value={"emwTemperature"}> Temperatura</option>
                       <option value={"emwUv"}> Índice UV</option>
                     </select>
+                  ) : selectedAlarme.type === "Sprinkler" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"boardVoltage"}> boardVoltage</option>
+                      <option value={"counter"}> Contador</option>
+                      <option value={"solenoid1"}> Solenoide 1</option>
+                      <option value={"solenoid2"}> Solenoide 2</option>
+                      <option value={"solenoid3"}> Solenoide 3</option>
+                    </select>
+                  ) : selectedAlarme.type === "SoilMoisture3DepthLevels" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"boardVoltage"}> boardVoltage</option>
+                      <option value={"soilMoistureDepthLevel1"}> Humidade 10 cm</option>
+                      <option value={"soilMoistureDepthLevel2"}> Humidade 30 cm</option>
+                      <option value={"soilMoistureDepthLevel3"}> Humidade 70 cm</option>
+                    </select>
                   ) : (
                     <p></p>
                   )}
-                  <p className="">Quando tocar</p>
+                  <p className="mt-2">Quando tocar</p>
                   <div className="flex">
-                    <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
-                      <option value={"higher"}> Acima de</option>
-                      <option value={"lower"}> Abaixo de</option>
-                    </select>
-                    <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
+                    {(triggerType === "solenoid1" || triggerType === "solenoid2" || triggerType === "solenoid3") ? (
+                      <div>
+                        <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                          <option value={"true"}> True</option>
+                          <option value={"false"}> False</option>
+                        </select>
+                      </div>) : (
+                      <div>
+                        <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                          <option value={"higher"}> Acima de</option>
+                          <option value={"lower"}> Abaixo de</option>
+                        </select>
+                        <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
+                      </div>
+                    )}
                   </div>
                   <p className="mt-2">Ação ao disparar o alarme</p>
                   <div className="flex">
@@ -527,7 +619,7 @@ const Alarmes = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => { updateAlarm()}}
+                  onClick={() => { updateAlarm() }}
                   className="m-2 bg-blue-500 text-white px-3 py-1 rounded h-8 text-lg font-bold hover:bg-blue-700"
                 >Editar alarme</button>
               </div>
@@ -587,7 +679,10 @@ const Alarmes = () => {
                             {alarme.triggerType}
                           </p>
                           <p className={`mr-2 font-medium text-black}`}>
-                          <strong>Tocar:</strong> {alarme.triggerAt == 'higher' ? "Acima de " : "Abaixo de "}{alarme.trigger}{
+                            <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
+                              alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
+                            {alarme.triggerAt === "higher" ? alarme.trigger :
+                              alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
                               alarme.triggerType === "boardVoltage" ? "V" :
                                 alarme.triggerType === "batteryVoltage" ? "V" :
                                   alarme.triggerType === "humidity" ? "%" :
@@ -603,29 +698,43 @@ const Alarmes = () => {
                                                       alarme.triggerType === "emwGustWindSpeed" ? " m/s" :
                                                         alarme.triggerType === "emwRainLevel" ? " mm" :
                                                           alarme.triggerType === "emwSolarRadiation" ? " W/m²" :
-                                                            alarme.triggerType === "emwUv" ? " UV" : ""
+                                                            alarme.triggerType === "emwUv" ? " UV" :
+                                                              alarme.triggerType === "solenoid1" ? "" :
+                                                                alarme.triggerType === "solenoid2" ? "" :
+                                                                  alarme.triggerType === "solenoid3" ? "" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                      alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                        alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
                             }
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
-                            <strong>Valor durante:</strong> {String(alarme.currentValue)}{
-                            alarme.triggerType === "boardVoltage" ? "V" :
-                              alarme.triggerType === "batteryVoltage" ? "V" :
-                                alarme.triggerType === "humidity" ? "%" :
-                                  alarme.triggerType === "luminosity" ? " lux" :
-                                    alarme.triggerType === "temperature" ? "°C" :
-                                      alarme.triggerType === "movement" ? "" :
-                                        alarme.triggerType === "distance" ? " m" :
-                                          alarme.triggerType === "counter" ? "" :
-                                            alarme.triggerType === "forwardEnergy" ? " kWh" :
-                                              alarme.triggerType === "reverseEnergy" ? " kWh" :
-                                                alarme.triggerType === "emwAtmPres" ? " atm" :
-                                                  alarme.triggerType === "windSpeed" ? " m/s" :
-                                                    alarme.triggerType === "windGustSpeed" ? " m/s" :
-                                                      alarme.triggerType === "rainLevel" ? " mm" :
-                                                        alarme.triggerType === "solarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "uvIndex" ? "" :
-                                                            ""
-                          }
+                            {
+                              alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
+                                <div></div>
+                              ) : (
+                                <>
+                                  <strong>Valor durante:</strong> {String(alarme.currentValue)}{
+                                    alarme.triggerType === "boardVoltage" ? "V" :
+                                      alarme.triggerType === "batteryVoltage" ? "V" :
+                                        alarme.triggerType === "humidity" ? "%" :
+                                          alarme.triggerType === "luminosity" ? " lux" :
+                                            alarme.triggerType === "temperature" ? "°C" :
+                                              alarme.triggerType === "movement" ? "" :
+                                                alarme.triggerType === "distance" ? " m" :
+                                                  alarme.triggerType === "counter" ? "" :
+                                                    alarme.triggerType === "forwardEnergy" ? " kWh" :
+                                                      alarme.triggerType === "reverseEnergy" ? " kWh" :
+                                                        alarme.triggerType === "emwAtmPres" ? " atm" :
+                                                          alarme.triggerType === "windSpeed" ? " m/s" :
+                                                            alarme.triggerType === "windGustSpeed" ? " m/s" :
+                                                              alarme.triggerType === "rainLevel" ? " mm" :
+                                                                alarme.triggerType === "solarRadiation" ? " W/m²" :
+                                                                  alarme.triggerType === "uvIndex" ? "" :
+                                                                    ""
+                                  }
+                                </>
+                              )
+                            }
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
                             <strong>Tocou em:</strong> {alarme.lastPlayed.toLocaleDateString("pt-br", {
@@ -638,7 +747,7 @@ const Alarmes = () => {
                             })}
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
-                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor): "Sem ação definida"} 
+                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : "Sem ação definida"}
                           </p>
                         </h1>
                       </div>
@@ -652,24 +761,36 @@ const Alarmes = () => {
           <div className="flex-col space-around justify-center items-center p-8">
             <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {alarmes.map((alarme, index) => {
-                const isTriggered = alarme.triggerAt == "higher" ? alarme.currentValue > Number(alarme.trigger) : alarme.currentValue < Number(alarme.trigger);
-                const actionSensor = alarme.actionSensor;
+                const isTriggered = alarme.triggerAt == "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt == "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
+                  alarme.triggerAt == "true" ? alarme.currentValue === "true" : alarme.currentValue === "false";
                 return (
                   <div
                     key={index}
-                    className={`animate-fade-in relative h-100 p-2 w-60 overflow-hidden rounded-xl ${isTriggered ? "bg-red-500 text-red-100" : "bg-white dark:bg-neutral-900 dark:text-neutral-700"} shadow-md`}
+                    className={`animate-fade-in relative h-100 p-4 w-64 overflow-hidden rounded-xl ${isTriggered ? "bg-red-500 text-red-100" : "bg-white dark:bg-neutral-900 dark:text-neutral-700"} shadow-md`}
                     style={{ boxShadow: '8px 8px 25px rgba(0,0,0,.2)' }}
                   >
-                    <div className="flex justify-between">
+                    <div className="flex items-center justify-between mb-4">
                       <button
-                        onClick={() => { deleteAlarme(alarme); }}
-                        className={`${isTriggered ? "text-white" : "text-black"} text-4xl ml-2`}
+                        onClick={() => deleteAlarme(alarme)}
+                        className={`font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "ext-white" : "text-black"} hover:bg-opacity-80 transition`}
                       >
-                        &times;
+                        X
                       </button>
+                      <p
+                        className={'text-base font-bold text-center px-4 py-2 truncate ${isTriggered ? "text-white" : "text-gray-700 "}'}
+                        style={{
+                          maxWidth: "200px",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
+                          textOverflow: "ellipsis",
+                        }}
+                        title={alarme.alarmName}
+                      >
+                        {alarme.alarmName || "Sem nome"}
+                      </p>
                       <button
                         onClick={() => openEditPopup(alarme)}
-                        className={`${isTriggered ? "text-white" : "text-black"} font-bold p-2`}
+                        className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
                       >
                         Editar
                       </button>
@@ -703,7 +824,10 @@ const Alarmes = () => {
                           {alarme.triggerType}
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          <strong>Tocar:</strong> {alarme.triggerAt == 'higher' ? "Acima de " : "Abaixo de "}{alarme.trigger}{
+                          <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
+                            alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
+                          {alarme.triggerAt === "higher" ? alarme.trigger :
+                            alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
                             alarme.triggerType === "boardVoltage" ? "V" :
                               alarme.triggerType === "batteryVoltage" ? "V" :
                                 alarme.triggerType === "humidity" ? "%" :
@@ -719,32 +843,50 @@ const Alarmes = () => {
                                                     alarme.triggerType === "emwGustWindSpeed" ? " m/s" :
                                                       alarme.triggerType === "emwRainLevel" ? " mm" :
                                                         alarme.triggerType === "emwSolarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "emwUv" ? " UV" : ""
+                                                          alarme.triggerType === "emwUv" ? " UV" :
+                                                            alarme.triggerType === "solenoid1" ? "" :
+                                                              alarme.triggerType === "solenoid2" ? "" :
+                                                                alarme.triggerType === "solenoid3" ? "" :
+                                                                  alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          <strong>Valor atual:</strong> {String(alarme.currentValue)}{
-                            alarme.triggerType === "boardVoltage" ? "V" :
-                              alarme.triggerType === "batteryVoltage" ? "V" :
-                                alarme.triggerType === "humidity" ? "%" :
-                                  alarme.triggerType === "luminosity" ? " lux" :
-                                    alarme.triggerType === "temperature" ? "°C" :
-                                      alarme.triggerType === "movement" ? "" :
-                                        alarme.triggerType === "distance" ? " m" :
-                                          alarme.triggerType === "counter" ? "" :
-                                            alarme.triggerType === "forwardEnergy" ? " kWh" :
-                                              alarme.triggerType === "reverseEnergy" ? " kWh" :
-                                                alarme.triggerType === "emwAtmPres" ? " atm" :
-                                                  alarme.triggerType === "windSpeed" ? " m/s" :
-                                                    alarme.triggerType === "windGustSpeed" ? " m/s" :
-                                                      alarme.triggerType === "rainLevel" ? " mm" :
-                                                        alarme.triggerType === "solarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "uvIndex" ? "" :
-                                                            ""
+                          {
+                            alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
+                              <>
+                                <strong>Valor atual:</strong> {alarme.currentValue}
+                              </>
+                            ) : (
+                              <>
+                                <strong>Valor atual:</strong> {String(alarme.currentValue)}{
+                                  alarme.triggerType === "boardVoltage" ? "V" :
+                                    alarme.triggerType === "batteryVoltage" ? "V" :
+                                      alarme.triggerType === "humidity" ? "%" :
+                                        alarme.triggerType === "luminosity" ? " lux" :
+                                          alarme.triggerType === "temperature" ? "°C" :
+                                            alarme.triggerType === "movement" ? "" :
+                                              alarme.triggerType === "distance" ? " m" :
+                                                alarme.triggerType === "counter" ? "" :
+                                                  alarme.triggerType === "forwardEnergy" ? " kWh" :
+                                                    alarme.triggerType === "reverseEnergy" ? " kWh" :
+                                                      alarme.triggerType === "emwAtmPres" ? " atm" :
+                                                        alarme.triggerType === "windSpeed" ? " m/s" :
+                                                          alarme.triggerType === "windGustSpeed" ? " m/s" :
+                                                            alarme.triggerType === "rainLevel" ? " mm" :
+                                                              alarme.triggerType === "solarRadiation" ? " W/m²" :
+                                                                alarme.triggerType === "uvIndex" ? "" :
+                                                                  alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
+                                }
+                              </>
+                            )
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida" }
+                          <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
                         </p>
                         <button
                           onClick={() => getAlarmHistory(alarme)}
