@@ -107,7 +107,6 @@ const Layout = ({ children }) => {
           style={{ height: 'calc(100vh - 56px)' }}>
           <div className="flex h-full flex-col justify-between space-y-16">
             <div className="space-y-4">
-              <p className="pl-3 font-medium dark:text-white">DISPOSITIVOS</p>
               <div className="flex flex-col space-y-4">
                 <a
                   href="/gms/devices"
@@ -136,7 +135,6 @@ const Layout = ({ children }) => {
                   <span>EVSE</span>
                 </a> 
               </div>
-              <p className="pl-3 font-medium dark:text-white">Alarme</p>
               <div className="mt-4 flex flex-col space-y-3">
                 <a
                   className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition ${pathname.match(/alerts/g) ? 'water-button-pressed' : 'water-button-unpressed'}`}
