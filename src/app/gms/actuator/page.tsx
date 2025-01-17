@@ -164,17 +164,18 @@ const Actuator = () => {
 
     if (actuatorAlarm === "") {
       try {
-        console.log("aqui que eu vou fazer o Downlink da ação!!!")
-        const url = `https://smartcampus-k8s.maua.br/api/ingestion/v0.1/IMT/LNS/Downlink/all`;
+        const action = (actionSensor === "sprinklersOn") ? "AFQ=" : (actionSensor === "sprinklersOff") ? "AKg=" : '';
+        console.log(actionSensor)
+        const url = `https://smartcampus-k8s.maua.br/api/ingestion/v0.1/IMT/LNS/Command/all`;
         const payload = 
         {
-          "application": "DET", // Application Name registered in the corresponding NetworkServer
+          "application": "SmartLight", // Application Name registered in the corresponding NetworkServer
           "etc": "imt", // NetworkServer to be queued
           "reference": "test-node-red",
-          "deviceId": "0004a30b00286d19",
+          "deviceId": "0004a30b00e94314",
           "confirmed": false,
           "fPort": 100, // lora downlink fPort
-          "data": "AAE=", // downlink data
+          "data": action, // downlink data
           "timestamp": Date.now() * 1000000 // nanoseconds
         };
 
@@ -253,7 +254,7 @@ const Actuator = () => {
             </div>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700">
-                Selecione um alarme para ativar o irrigador:
+                Selecione um alarme para ativar o irrigador: <span className="text-gray-500 text-xs"> (Opcional)</span> 
               </label>
               <div className="flex items-center mt-2">
                 <select
@@ -297,7 +298,7 @@ const Actuator = () => {
             </div>
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700">
-                Selecione a ação que deseja fazer:
+                Selecione a ação que deseja fazer: <span className="text-red-500 text-xs"> *</span>
               </label>
               <div className="flex items-center mt-2">
                 <select
