@@ -66,7 +66,7 @@ class AlarmeHistory {
   triggerType: string; // boardVoltage
   currentValue: string;
   lastPlayed: Date;
-  actionSensor: string
+  actionSensor: string;
 
   constructor(type: string, local: string, deveui: string, trigger: string, triggerAt: string, triggerType: string, currentValue: string, lastPlayed: Date, actionSensor: string) {
     this.deveui = deveui;
