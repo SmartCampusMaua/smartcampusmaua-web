@@ -5,6 +5,9 @@ import mqtt from "mqtt";
 import DashboardLayout from "../components/DashboardLayout";
 import Head from "next/head";
 import { Evse } from "@/database/dataTypes";
+import { supabase } from "@/database/supabaseClient";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function Home() {
   const [data, setData] = useState<Evse[]>([]);
@@ -32,7 +35,7 @@ export default function Home() {
       });
     });
 
-    client.on("message", (topic, message) => {
+    client.on("message", async (topic, message) => {
       try {
         const jsonObject = JSON.parse(message.toString());
 
@@ -98,29 +101,48 @@ export default function Home() {
     }
   };
 
-  const handleExportSensor = async (id, interval) => { // by now we are only exporting MeterValue data!! 
+  const handleExportSensor = async (id, interval) => { // by now we are only exporting MeterValue data!! because there isn't any data on the others 
     try {
       const urls = [
         `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/MeterValues/deviceId/${id}?interval=${interval}`,
-        // `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/deviceId/${id}?interval=${interval}`, 
-        // `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StopTransaction/deviceId/${id}?interval=${interval}`, 
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/deviceId/${id}?interval=${interval}`,
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/deviceId/${id}?interval=${interval}`,
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StopTransaction/deviceId/${id}?interval=${interval}`,
       ];
-  
+
       const fetchData = async (url) => {
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error(`Erro ao obter os dados da API: ${url}`);
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            console.warn(`No data for URL: ${url}`);
+            return null;
+          }
+          return await response.json();
+        } catch (error) {
+          console.warn(`Error fetching URL: ${url} - ${error.message}`);
+          return null;
         }
-        return await response.json();
       };
-  
-      const allData = await Promise.all(urls.map(url => fetchData(url)));
-  
-      const combinedData = allData.flat();
-  
+
+      const allDataResponses = await Promise.all(urls.map((url) => fetchData(url)));
+
+      const validData = allDataResponses.filter((data) => data !== null);
+
+      const emptyUrls = urls.filter((_, index) => allDataResponses[index] === null);
+      if (emptyUrls.length > 0) {
+        console.log(`No data available for the following URLs:`, emptyUrls);
+      }
+
+      const combinedData = validData.flat();
+
+      if (combinedData.length === 0) {
+        console.warn("No valid data to process.");
+        return;
+      }
+
       const jsonToCsv = (json) => {
         if (!Array.isArray(json) || json.length === 0) {
-          throw new Error("JSON inválido ou vazio");
+          throw new Error("Invalid or empty JSON data");
         }
 
         const extractKeys = (obj, prefix = "") =>
@@ -132,48 +154,148 @@ export default function Home() {
             return keys.concat(`${prefix}${key}`);
           }, []);
 
-        const headers = [
-          ...new Set(
-            json.flatMap((item) => extractKeys(item))
+        const headers = [...new Set(json.flatMap((item) => extractKeys(item)))];
+
+        const rows = json
+          .map((row) =>
+            headers
+              .map((header) => {
+                const keys = header.split(".");
+                let value = row;
+
+                for (const key of keys) {
+                  value = value?.[key] ?? "";
+                }
+                return typeof value === "object" ? "" : value;
+              })
+              .join(",")
           )
-        ];
-
-        const rows = json.map((row) => {
-          return headers.map((header) => {
-            const keys = header.split(".");
-            let value = row;
-
-            for (const key of keys) {
-              value = value?.[key] ?? "";
-            }
-            return typeof value === "object" ? "" : value;
-          }).join(",");
-        }).join("\n");
+          .join("\n");
 
         return `${headers.join(",")}\n${rows}`;
       };
-  
+
       const csvData = jsonToCsv(combinedData);
-  
+
       const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-  
+
       const link = document.createElement("a");
-  
+
       const urlBlob = URL.createObjectURL(blob);
-  
+
       link.href = urlBlob;
       link.download = `EVSE-${id}-${interval}_minutes.csv`;
-  
+
       document.body.appendChild(link);
       link.click();
-  
+
       document.body.removeChild(link);
       URL.revokeObjectURL(urlBlob);
-  
     } catch (error) {
-      console.error("Erro ao processar os dados:", error);
+      console.error("Error processing data:", error);
     }
   };
+
+  const [alarmInsertAttempt, setAlarmInsertAttempt] = useState<boolean>(false);
+  const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
+  const [triggerType, setTriggerType] = useState('');
+  const [triggerAt, setTriggerAt] = useState<string>();
+  const [alarmName, setAlarmName] = useState<string>('');
+  const [alarmSensor, setAlarmSensor] = useState<Evse>();
+  const [trigger, setTrigger] = useState<string>();
+  const [alarmPopupOpen, setAlarmPopupOpen] = useState(false);
+
+  const handleNewAlarm = async () => {
+    setAlarmInsertAttempt(true);
+    const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
+    const userEmailResponse = await response.json();
+    const userEmail = userEmailResponse.displayName;
+
+    const { data: userData, error } = await supabase
+      .from('User')
+      .select('id')
+      .eq('email', userEmail);
+
+    if (error) {
+      console.error('Error fetching user data: ', error);
+    } else {
+      if (triggerType !== "" && triggerAt !== "") {
+        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
+        const userEmailResponse = await response.json();
+        const userEmail = userEmailResponse.displayName;
+
+        const { data: userData, error } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', userEmail);
+
+        if (error) {
+          console.error('Error fetching user data: ', error);
+        } else {
+          var alarmAlreadyExists = false
+
+          if (alarmName && alarmName.trim() !== "") {
+            const { data: existingAlarms, error } = await supabase
+              .from('Alarms')
+              .select('alarmName')
+              .eq('userId', userData[0].id)
+
+            existingAlarms.forEach(existingAlarm => {
+              if (existingAlarm.alarmName === alarmName) {
+                alarmAlreadyExists = true
+                alert("Você já possuí um alarme com o nome escolhido")
+              }
+            });
+          }
+          if (!alarmAlreadyExists) {
+            if (triggerType === "stopTime") {
+              const { error } = await supabase
+                .from('Alarms')
+                .insert({
+                  userId: userData[0].id,
+                  type: "Evse",
+                  local: alarmSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (alarmSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'),
+                  deveui: alarmSensor.deviceId,
+                  trigger: null,
+                  triggerAt: null,
+                  triggerType: triggerType,
+                  alreadyPlayed: false,
+                  // actionSensor: actionSensor, // acho que não precisa de ação por enquanto.
+                  alarmName: alarmName
+                })
+              if (error) {
+                console.error('Erro ao atualizar alarme no banco de dados', error);
+              } else {
+                setAlarmInsertAttempt(false);
+                setAlarmPopupOpen(false);
+              }
+            } else {
+              const { error } = await supabase
+                .from('Alarms')
+                .insert({
+                  userId: userData[0].id,
+                  type: "Evse",
+                  local: alarmSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (alarmSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'),
+                  deveui: alarmSensor.deviceId,
+                  trigger: trigger,
+                  triggerAt: triggerAt,
+                  triggerType: triggerType,
+                  alreadyPlayed: false,
+                  // actionSensor: actionSensor, // acho que não precisa de ação por enquanto.
+                  alarmName: alarmName
+                })
+              if (error) {
+                console.error('Erro ao atualizar alarme no banco de dados', error);
+              } else {
+                setAlarmInsertAttempt(false);
+                setAlarmPopupOpen(false);
+              }
+            }
+          }
+        }
+      };
+    }
+  }
 
   return (
     <DashboardLayout>
@@ -191,13 +313,13 @@ export default function Home() {
               <div className="m-2">
                 <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
                 <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
-                  {selectedSensor.chargePointId || "Nome não disponível"}
+                  {selectedSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  Local: {selectedSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : "Centro Acadêmico"}
+                  Local: {selectedSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (selectedSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  DEVEUI: {selectedSensor.deviceId}
+                  DeviceID: {selectedSensor.deviceId}
                 </p>
                 <ul className="text-sm space-y-2">
                   {
@@ -205,20 +327,19 @@ export default function Home() {
                       <li>
                         <strong>ForwardEnergy: </strong>{selectedSensor.forwardEnergy}
                       </li>
-                      <li>
-                        <strong>BoardVoltage: </strong>{selectedSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
-                      </li>
-                      <li>
-                        <p><strong>Atualizado por último:</strong> {new Date(selectedSensor.timestamp * 1000).toLocaleString()}</p>
-                      </li>
                     </ul>
                   }
+                  {selectedSensor.timestamp && (
+                    <li>
+                      <strong>Atualizado por último:</strong> {new Date(selectedSensor.timestamp * 1000).toLocaleString()}
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>
             {/* Field to define the time interval */}
             <div className="m-2 flex justify-center h-fit max-w-[24rem] bg-grey-500 rounded">
-              
+
               <div className="m-2">
                 <label htmlFor="dateInput" className="text-black font-bold">
                   Selecione uma data (máximo: últimos 30 dias):
@@ -268,7 +389,111 @@ export default function Home() {
         </div>
       ) : null}
 
-      {!exportInfoPopupOpen && (
+      {alarmPopupOpen ? (
+        <div className="flex flex-col w-full">
+          <div className="m-4">
+            <button
+              onClick={() => setAlarmPopupOpen(!alarmPopupOpen)}
+              className="m-2 bg-red-500 hover:bg-red-700 text-white text-2xl font-bold py-3 px-6 rounded">
+              Voltar
+            </button>
+          </div>
+          <div className="container max-w-screen-lg mx-auto grid grid-cols-1 sm:grid-cols-2 justify-items-center">
+            <div className="m-2 flex justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
+              <div className="m-2">
+                <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
+                <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
+                  {alarmSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+                  Local: {alarmSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (alarmSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+                  DEVICEID: {alarmSensor.deviceId}
+                </p>
+                <ul className="text-sm space-y-2">
+                  {
+                    (
+                      <ul>
+                        <li>
+                          <strong>ForwardEnergy: </strong>{alarmSensor.forwardEnergy}
+                        </li>
+                        <li>
+                          <strong>Type: </strong>{alarmSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                        </li>
+                      </ul>
+                    )
+                  }
+                  {alarmSensor.timestamp && (
+                    <li>
+                      <strong>Atualizado por último:</strong> {new Date(alarmSensor.timestamp * 1000).toLocaleString()}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </div>
+            <div className="m-2 flex flex-col justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
+              <div className="m-2">
+                <p className="font-bold text-3xl text-center m-2">Criar Alarme</p>
+                <p>
+                  Digite um nome para o seu alarme:
+                </p>
+                <input type="text" id="alarmName" className="mx-1 w-32 border border-black rounded p-1 text-lg m-2" placeholder="Nome" value={alarmName} onChange={(event) => setAlarmName(event.target.value)} />
+                <p>
+                  Escolha o campo para o alarme
+                </p>
+                {
+                  <select className="border border-black rounded p-1 text-lg m-2" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={""}></option>
+                    {/* <option value={"forwardEnergy"}> forwardEnergy</option> */}
+                    <option value={"stopTime"}> stopTime</option>
+                  </select>
+                }
+
+                {(triggerType === "stopTime" || triggerType === "") ? (
+                  triggerType === "stopTime" ?
+
+                    <div className="bg-blue-50 text-gray-800 p-2 rounded-lg text-sm">
+                      <p>Tocar quando o carregador parar de ser utilizado</p>
+                    </div> : <div></div>
+                ) : (
+                  <div>
+                    <p className="mt-2">Quando tocar</p>
+                    <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"higher"}> Acima de</option>
+                      <option value={"lower"}> Abaixo de</option>
+                    </select>
+                    <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
+                  </div>
+                )}
+                {/* <p className="mt-2">Ação a realizar ao tocar o alarme</p>
+                <div className="flex">
+                  <select className="border border-black rounded p-1 text-lg" value={actionSensor} onChange={(event) => setActionSensor(event.target.value)}>
+                    <option value={""}></option>
+                    <option value={"sprinklersOn"}> Acionar Irrigadores</option>
+                    <option value={"sprinklersOff"}> Desligar Irrigadores</option>
+                  </select>
+                </div> */}
+              </div>
+              <button
+                onClick={handleNewAlarm}
+                className="m-2 bg-blue-500 text-white px-3 py-1 rounded h-8 text-lg font-bold hover:bg-blue-700"
+              >Criar alarme</button>
+            </div>
+          </div>
+          <div className="mt-4 text-5xl text-center font-bold">
+            {triggerType == "" && alarmInsertAttempt ? (
+              <p className="text-red-500">Insira todos os dados</p>
+            ) : (
+              <p></p>
+            )
+            }
+          </div>
+        </div>
+      ) : null}
+
+      {!exportInfoPopupOpen && !alarmPopupOpen && (
         <div>
           <Head>
             <title>Carregadores EVSE</title>
@@ -288,9 +513,9 @@ export default function Home() {
                       Dispositivo: {evse.deviceId}
                     </h2>
                     <p><strong>Forward Energy:</strong> {parseFloat(evse.forwardEnergy).toFixed(4)} KWh</p>
-                    <p><strong>Local: </strong> {evse.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : ( evse.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}</p>
-                    <p>
-                      <strong>Type:</strong>{evse.connectorId.replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
+                    <p><strong>Local: </strong> {evse.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (evse.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}</p>
+                    <p><strong>Type:</strong>{evse.connectorId.replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
+
                     <p><strong>Atualizado por último:</strong> {new Date(evse.timestamp * 1000).toLocaleString()}</p>
                     <div className="flex mt-2 space-x-2">
                       <button
@@ -298,9 +523,18 @@ export default function Home() {
                           setExportInfoPopupOpen(true);
                           setSelectedSensor(evse);
                         }}
-                        className=" bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
+                        className="bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
                       >
                         Exportar .csv
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAlarmPopupOpen(!alarmPopupOpen);
+                          setAlarmSensor(evse);
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                      >
+                        Adicionar Alarme
                       </button>
                     </div>
                   </div>
@@ -312,7 +546,7 @@ export default function Home() {
                       key={index}
                       className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
                     >
-                      <div className="h-6  rounded w-3/4 mb-4 font-bold">Nenhum dado encontrado</div>
+                      <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
                       <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
                       <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
                       <div className="h-4 bg-gray-300 rounded w-5/6 mb-2"></div>
