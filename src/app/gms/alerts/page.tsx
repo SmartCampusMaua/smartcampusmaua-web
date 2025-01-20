@@ -820,12 +820,16 @@ const Alarmes = () => {
                       >
                         {alarme.alarmName || "Sem nome"}
                       </p>
-                      <button
-                        onClick={() => openEditPopup(alarme)}
-                        className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
-                      >
-                        Editar
-                      </button>
+
+                      {alarme.triggerType !== 'stopTime' ? (
+                          <button
+                            onClick={() => openEditPopup(alarme)}
+                            className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
+                          >
+                            Editar
+                          </button>
+                        ) : <div className={`text-sm font-bold flex items-center justify-center w-10 h-10 `}></div>
+                      }
                     </div>
                     <div className="">
                       <svg
@@ -857,7 +861,7 @@ const Alarmes = () => {
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
                           <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
-                            alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
+                            alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " "}
                           {alarme.triggerAt === "higher" ? alarme.trigger :
                             alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
                             alarme.triggerType === "boardVoltage" ? "V" :
@@ -881,14 +885,15 @@ const Alarmes = () => {
                                                                 alarme.triggerType === "solenoid3" ? "" :
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
-                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
+                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
+                                                                        alarme.triggerType === "stopTime" ? "Ao liberar carregador" : ''
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
                           {
                             alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
                               <>
-                                <strong>Valor atual:</strong> {alarme.currentValue}
+                                <strong>Valor atual:</strong> {alarme.currentValue }
                               </>
                             ) : (
                               <>
@@ -917,9 +922,11 @@ const Alarmes = () => {
                             )
                           }
                         </p>
-                        <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
-                        </p>
+                        {alarme.triggerType === "stopTime" ? null : (
+                          <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
+                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
+                          </p>
+                        )}
                         <button
                           onClick={() => getAlarmHistory(alarme)}
                           className={`rounded-lg text-lg px-2 ${isTriggered ? "text-red-500 bg-white hover:bg-gray-300" : "text-white bg-blue-500 hover:bg-blue-700"} font-bold mt-1`}
