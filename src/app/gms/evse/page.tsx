@@ -4,17 +4,16 @@ import React, { useEffect, useState } from "react";
 import mqtt from "mqtt";
 import DashboardLayout from "../components/DashboardLayout";
 import Head from "next/head";
-import { Evse } from "@/database/dataTypes";
+import { GenericSensor } from "@/database/dataTypes";
 import { supabase } from "@/database/supabaseClient";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { fetchSensors } from "@/database/timeseries";
 
 export default function Home() {
-  const [data, setData] = useState<Evse[]>([]);
+  const [sensors, setSensors] = useState<GenericSensor[]>([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [interval, setInterval] = useState(30); // Estado para armazenar o intervalo de dias na exportação (.csv) de um sensor
   const [exportInfoPopupOpen, setExportInfoPopupOpen] = useState(false);
-  const [selectedSensor, setSelectedSensor] = useState<Evse>();
+  const [selectedSensor, setSelectedSensor] = useState<GenericSensor>();
 
   const broker = "wss://mqtt.maua.br:8084";
   const options = {
@@ -38,25 +37,26 @@ export default function Home() {
     client.on("message", async (topic, message) => {
       try {
         const jsonObject = JSON.parse(message.toString());
-
+    
         if (jsonObject.name === "MeterValues" && jsonObject.tags.deviceType === "EVSE") {
           const { forwardEnergy } = jsonObject.fields;
           const { chargePointId, connectorId, deviceId } = jsonObject.tags;
-          const timestamp = jsonObject.timestamp;
-
-          const evse = new Evse(
-            chargePointId,
-            forwardEnergy,
-            connectorId,
-            deviceId,
+          const timestamp = new Date(jsonObject.timestamp);
+    
+          const evse = new GenericSensor(
+            chargePointId, // Name
+            "EVSE", // Type
+            [forwardEnergy], // Fields
+            [chargePointId, connectorId, deviceId], // Tags
+            connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'), // Local
             timestamp
           );
-
-          setData((prevData) => {
-            const existingEvse = prevData.find((item) => item.deviceId === evse.deviceId);
+    
+          setSensors((prevData) => {
+            const existingEvse = prevData.find((item) => item.tags.includes(evse.tags[2])); // Match by deviceId
             if (existingEvse) {
               return prevData.map((item) =>
-                item.deviceId === evse.deviceId ? { ...item, ...evse } : item
+                item.tags.includes(evse.tags[2]) ? { ...item, fields: evse.fields, timestamp: evse.timestamp } : item
               );
             } else {
               return [...prevData, evse];
@@ -68,10 +68,10 @@ export default function Home() {
       }
     });
 
-    return () => {
-      client.end();
-    };
-  }, []);
+  return () => {
+    client.end();
+  };
+}, []);
 
 
   const getMaxDate = () => {
@@ -201,7 +201,7 @@ export default function Home() {
   const [triggerType, setTriggerType] = useState('');
   const [triggerAt, setTriggerAt] = useState<string>();
   const [alarmName, setAlarmName] = useState<string>('');
-  const [alarmSensor, setAlarmSensor] = useState<Evse>();
+  const [alarmSensor, setAlarmSensor] = useState<GenericSensor>();
   const [trigger, setTrigger] = useState<string>();
   const [alarmPopupOpen, setAlarmPopupOpen] = useState(false);
 
@@ -248,16 +248,16 @@ export default function Home() {
             });
           }
           if (!alarmAlreadyExists) {
-            if (triggerType === "stopTime") {
+            if (triggerType === "status") {
               const { error } = await supabase
                 .from('Alarms')
                 .insert({
                   userId: userData[0].id,
                   type: "Evse",
-                  local: alarmSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (alarmSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'),
-                  deveui: alarmSensor.deviceId,
-                  trigger: null,
-                  triggerAt: null,
+                  local: alarmSensor.local,
+                  deveui: alarmSensor.tags[2],
+                  trigger: '',
+                  triggerAt: '',
                   triggerType: triggerType,
                   alreadyPlayed: false,
                   // actionSensor: actionSensor, // acho que não precisa de ação por enquanto.
@@ -275,8 +275,8 @@ export default function Home() {
                 .insert({
                   userId: userData[0].id,
                   type: "Evse",
-                  local: alarmSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (alarmSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'),
-                  deveui: alarmSensor.deviceId,
+                  local: alarmSensor.local,
+                  deveui: alarmSensor.tags[2],
                   trigger: trigger,
                   triggerAt: triggerAt,
                   triggerType: triggerType,
@@ -313,25 +313,25 @@ export default function Home() {
               <div className="m-2">
                 <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
                 <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
-                  {selectedSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                  {selectedSensor.tags[1].replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  Local: {selectedSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (selectedSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}
+                  Local: {selectedSensor.local}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  DeviceID: {selectedSensor.deviceId}
+                  DeviceID: {selectedSensor.tags[2]}
                 </p>
                 <ul className="text-sm space-y-2">
                   {
                     <ul>
                       <li>
-                        <strong>ForwardEnergy: </strong>{selectedSensor.forwardEnergy}
+                        <strong>ForwardEnergy: </strong>{selectedSensor.fields[0]}
                       </li>
                     </ul>
                   }
                   {selectedSensor.timestamp && (
                     <li>
-                      <strong>Atualizado por último:</strong> {new Date(selectedSensor.timestamp * 1000).toLocaleString()}
+                      <strong>Atualizado por último:</strong> {new Date(Number(selectedSensor.timestamp) * 1000).toLocaleString()}
                     </li>
                   )}
                 </ul>
@@ -377,7 +377,7 @@ export default function Home() {
                 <button
                   onClick={() => {
                     setExportInfoPopupOpen(false);
-                    handleExportSensor(selectedSensor.deviceId, interval);
+                    handleExportSensor(selectedSensor.tags[2], interval);
                   }}
                   className="bg-left text-white font-bold py-2 px-4 rounded border border-green-400 bg-green-400 hover:bg-green-700 "
                 >
@@ -403,30 +403,30 @@ export default function Home() {
               <div className="m-2">
                 <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
                 <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
-                  {alarmSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                  {alarmSensor.tags[1].replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  Local: {alarmSensor.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (alarmSensor.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}
+                  Local: {alarmSensor.local}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  DEVICEID: {alarmSensor.deviceId}
+                  DEVICEID: {alarmSensor.tags[2]}
                 </p>
                 <ul className="text-sm space-y-2">
                   {
                     (
                       <ul>
                         <li>
-                          <strong>ForwardEnergy: </strong>{alarmSensor.forwardEnergy}
+                          <strong>ForwardEnergy: </strong>{alarmSensor.fields[0]}
                         </li>
                         <li>
-                          <strong>Type: </strong>{alarmSensor.connectorId.replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                          <strong>Type: </strong>{alarmSensor.tags[1].replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
                         </li>
                       </ul>
                     )
                   }
                   {alarmSensor.timestamp && (
                     <li>
-                      <strong>Atualizado por último:</strong> {new Date(alarmSensor.timestamp * 1000).toLocaleString()}
+                      <strong>Atualizado por último:</strong> {new Date(Number(alarmSensor.timestamp) * 1000).toLocaleString()}
                     </li>
                   )}
                 </ul>
@@ -446,12 +446,12 @@ export default function Home() {
                   <select className="border border-black rounded p-1 text-lg m-2" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
                     <option value={""}></option>
                     {/* <option value={"forwardEnergy"}> forwardEnergy</option> */}
-                    <option value={"stopTime"}> stopTime</option>
+                    <option value={"status"}> status</option>
                   </select>
                 }
 
-                {(triggerType === "stopTime" || triggerType === "") ? (
-                  triggerType === "stopTime" ?
+                {(triggerType === "status" || triggerType === "") ? (
+                  triggerType === "status" ?
 
                     <div className="bg-blue-50 text-gray-800 p-2 rounded-lg text-sm">
                       <p>Tocar quando o carregador parar de ser utilizado</p>
@@ -503,20 +503,20 @@ export default function Home() {
               Dados dos Carregadores EVSE
             </h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.length > 0 ? (
-                data.map((evse, index) => (
+              {sensors.length > 0 ? (
+                sensors.map((evse, index) => (
                   <div
-                    key={evse.deviceId}
+                    key={evse.tags[2]}
                     className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
                   >
                     <h2 className="text-xl font-semibold mb-2">
-                      Dispositivo: {evse.deviceId}
+                      Dispositivo: {evse.tags[2]}
                     </h2>
-                    <p><strong>Forward Energy:</strong> {parseFloat(evse.forwardEnergy).toFixed(4)} KWh</p>
-                    <p><strong>Local: </strong> {evse.connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (evse.connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT')}</p>
-                    <p><strong>Type:</strong>{evse.connectorId.replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
+                    <p><strong>Forward Energy:</strong> {parseFloat(evse.fields[0]).toFixed(4)} KWh</p>
+                    <p><strong>Local: </strong> {evse.local}</p>
+                    <p><strong>Type:</strong>{evse.tags[1].replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
 
-                    <p><strong>Atualizado por último:</strong> {new Date(evse.timestamp * 1000).toLocaleString()}</p>
+                    <p><strong>Atualizado por último:</strong> {new Date(Number(evse.timestamp) * 1000).toLocaleString()}</p>
                     <div className="flex mt-2 space-x-2">
                       <button
                         onClick={() => {
@@ -527,15 +527,17 @@ export default function Home() {
                       >
                         Exportar .csv
                       </button>
-                      <button
-                        onClick={() => {
-                          setAlarmPopupOpen(!alarmPopupOpen);
-                          setAlarmSensor(evse);
-                        }}
-                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                      >
-                        Adicionar Alarme
-                      </button>
+                      {evse.local !== "IMT" && (
+                        <button
+                          onClick={() => {
+                            setAlarmPopupOpen(!alarmPopupOpen);
+                            setAlarmSensor(evse);
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                        >
+                          Adicionar Alarme
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))

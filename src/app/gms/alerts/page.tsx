@@ -821,7 +821,7 @@ const Alarmes = () => {
                         {alarme.alarmName || "Sem nome"}
                       </p>
 
-                      {alarme.triggerType !== 'stopTime' ? (
+                      {alarme.triggerType !== 'status' ? (
                           <button
                             onClick={() => openEditPopup(alarme)}
                             className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
@@ -886,7 +886,7 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "stopTime" ? "Ao liberar carregador" : ''
+                                                                        alarme.triggerType === "status" ? "Ao liberar carregador" : ''
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
@@ -922,7 +922,7 @@ const Alarmes = () => {
                             )
                           }
                         </p>
-                        {alarme.triggerType === "stopTime" ? null : (
+                        {alarme.triggerType === "status" ? null : (
                           <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
                             <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
                           </p>
