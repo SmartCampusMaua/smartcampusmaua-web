@@ -4,7 +4,7 @@ import Head from 'next/head';
 import DashboardLayout from "@/app/gms/components/DashboardLayout";
 import { useState, useEffect } from 'react';
 import { GenericSensor, AlarmeValue, AlarmeHistory } from '@/database/dataTypes';
-import { fetchSensorByDEVEUI, fetchSensors } from '@/database/timeseries';
+import { fetchEvseStatusNotification, fetchSensorByDEVEUI, fetchSensors } from '@/database/timeseries';
 import { formatDistanceToNow } from 'date-fns';
 
 import { supabase } from '@/database/supabaseClient';
@@ -164,37 +164,44 @@ const Alarmes = () => {
 
   useEffect(() => {
     const getAlarmes = async () => {
-      const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-      const userEmailResponse = await response.json();
-      const userEmail = userEmailResponse.displayName;
+      try {
+        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
+        const userEmailResponse = await response.json();
+        const userEmail = userEmailResponse.displayName;
 
-      const { data: userData, error } = await supabase
-        .from('User')
-        .select('id')
-        .eq('email', userEmail);
+        const { data: userData, error: userError } = await supabase
+          .from('User')
+          .select('id')
+          .eq('email', userEmail);
 
-      if (error) {
-        console.error('Error fetching user data: ', error);
-      } else {
-        const { data: alarmsData, error } = await supabase
+        if (userError) {
+          console.error('Error fetching user data: ', userError);
+          return;
+        }
+
+        const { data: alarmsData, error: alarmsError } = await supabase
           .from('Alarms')
-          .select('id, alarmName, userId, type, local, deveui, trigger, triggerAt, triggerType, alreadyPlayed, actionSensor')
+          .select(
+            'id, alarmName, userId, type, local, deveui, trigger, triggerAt, triggerType, alreadyPlayed, actionSensor'
+          )
           .eq('userId', userData[0].id);
 
-        if (error) {
-          console.error('Error fetching user alarms: ', error);
+        if (alarmsError) {
+          console.error('Error fetching user alarms: ', alarmsError);
+          return;
         }
-        else {
-          var newAlarmes = [];
 
-          alarmsData.forEach(alarmData => {
-            var currentValue;
-            sensors.forEach(sensor => {
+        const newAlarmes = await Promise.all(
+          alarmsData.map(async (alarmData) => {
+            let currentValue = null;
+
+            sensors.forEach((sensor) => {
               if (sensor.tags[0] === alarmData.deveui) {
-                function getNumericValue(value) {
-                  value += ""; // Fix caso value não seja string
+                const getNumericValue = (value) => {
+                  value += ''; // Fix caso value não seja string
                   return parseFloat(value.split(' ')[0]);
-                }
+                };
+
                 switch (alarmData.triggerType) {
                   case "boardVoltage": {
                     currentValue = getNumericValue(sensor.fields[0]).toFixed(1);
@@ -296,10 +303,17 @@ const Alarmes = () => {
                     currentValue = getNumericValue(sensor.fields[3]);
                     break;
                   }
+
                 }
               }
             });
-            newAlarmes.push(new AlarmeValue(
+
+            // Apenas a função assíncrona `fetchEvseStatusNotification`
+            if (alarmData.triggerType === 'status') {
+              currentValue = await fetchEvseStatusNotification(alarmData.deveui);
+            }
+
+            return new AlarmeValue(
               alarmData.id,
               alarmData.alarmName,
               alarmData.userId,
@@ -312,12 +326,16 @@ const Alarmes = () => {
               alarmData.alreadyPlayed,
               currentValue,
               alarmData.actionSensor
-            ));
-          });
-          setAlarmes(newAlarmes);
-        }
+            );
+          })
+        );
+
+        setAlarmes(newAlarmes);
+      } catch (error) {
+        console.error('Error in getAlarmes: ', error);
+      } finally {
+        setSendingNewAlarm(false);
       }
-      setSendingNewAlarm(false);
     };
 
     getAlarmes();
@@ -793,8 +811,10 @@ const Alarmes = () => {
           <div className="flex-col space-around justify-center items-center p-8">
             <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {alarmes.map((alarme, index) => {
-                const isTriggered = alarme.triggerAt == "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt == "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
-                  alarme.triggerAt == "true" ? alarme.currentValue === "true" : alarme.currentValue === "false";
+                const isTriggered = alarme.triggerAt === "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt === "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
+                  alarme.triggerAt === "true" ? alarme.currentValue === "true" : alarme.triggerAt === "false" ? alarme.currentValue === "false" :
+                    alarme.triggerAt === "" ? alarme.currentValue === "Available" : alarme.currentValue !== "Available";
+
                 return (
                   <div
                     key={index}
@@ -821,14 +841,14 @@ const Alarmes = () => {
                         {alarme.alarmName || "Sem nome"}
                       </p>
 
-                      {alarme.triggerType !== 'stopTime' ? (
-                          <button
-                            onClick={() => openEditPopup(alarme)}
-                            className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
-                          >
-                            Editar
-                          </button>
-                        ) : <div className={`text-sm font-bold flex items-center justify-center w-10 h-10 `}></div>
+                      {alarme.triggerType !== 'status' ? (
+                        <button
+                          onClick={() => openEditPopup(alarme)}
+                          className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
+                        >
+                          Editar
+                        </button>
+                      ) : <div className={`text-sm font-bold flex items-center justify-center w-10 h-10 `}></div>
                       }
                     </div>
                     <div className="">
@@ -886,14 +906,14 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "stopTime" ? "Ao liberar carregador" : ''
+                                                                        alarme.triggerType === "status" ? "Ao liberar carregador" : ''
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
                           {
                             alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
                               <>
-                                <strong>Valor atual:</strong> {alarme.currentValue }
+                                <strong>Valor atual:</strong> {alarme.currentValue}
                               </>
                             ) : (
                               <>
@@ -916,13 +936,14 @@ const Alarmes = () => {
                                                                 alarme.triggerType === "uvIndex" ? "" :
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
-                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
+                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
+                                                                        alarme.triggerType === "status" ? "" : ""
                                 }
                               </>
                             )
                           }
                         </p>
-                        {alarme.triggerType === "stopTime" ? null : (
+                        {alarme.triggerType === "status" ? null : (
                           <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
                             <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
                           </p>

@@ -8,6 +8,31 @@ const apiUrlEnergyMeter = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/I
 const apiUrlWeatherStation = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/WeatherStation/all?interval=30";
 const apiUrlSprinkler = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Sprinkler/all?interval=30";
 const apiUrlSoilMoisture3DepthLevels = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/SoilMoisture3DepthLevels/all?interval=30";
+const apiUrlEvseStatusNotification = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/all?interval=30000";
+// const apiUrlEvseStartTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/all?interval=30";
+// const apiUrlEvseStopTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StTransaction/all?interval=30000";
+
+async function fetchEvseStatusNotification(deviceId) {
+  try {
+    const response = await fetch(apiUrlEvseStatusNotification);
+    const text = await response.text();
+
+    if (!response.ok || !text) throw new Error('Invalid or empty response (StatusNotification)');
+
+    const data = JSON.parse(text);
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn("Response is not an array or is empty");
+      return null; 
+    }
+
+    const deviceData = data.find(item => item?.tags?.deviceId === deviceId);
+    return deviceData?.tags?.status ?? "Sem informações";
+  } catch (error) {
+    console.error('Error fetching status:', error);
+    return null; 
+  }
+}
 
 async function fetchSmartLight() {
   const response = await fetch(apiUrlSmartLight);
@@ -415,4 +440,4 @@ async function fetchSensorByDEVEUI(deveui: string) {
 }
 
 
-export { fetchSmartLight, fetchAllSensors, fetchSensors, fetchSensorByDEVEUI }
+export { fetchSmartLight, fetchAllSensors, fetchSensors, fetchSensorByDEVEUI, fetchEvseStatusNotification }

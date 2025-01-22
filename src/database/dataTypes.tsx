@@ -92,29 +92,6 @@ class GenericSensor {
   ) { }
 }
 
-class Evse {
-  chargePointId: string;
-  forwardEnergy: string;
-  connectorId: string;
-  deviceId: string;
-  timestamp: number;
-  
 
-  constructor(
-    chargePointId: string,
-    forwardEnergy: string,
-    connectorId: string,
-    deviceId: string,
-    timestamp: number,
 
-  ) {
-    this.chargePointId = chargePointId;
-    this.forwardEnergy = forwardEnergy;
-    this.connectorId = connectorId;
-    this.deviceId = deviceId;
-    this.timestamp = timestamp;
-
-  }
-}
-
-export { Alarme, GenericSensor, AlarmeValue, AlarmeHistory, Evse }
+export { Alarme, GenericSensor, AlarmeValue, AlarmeHistory }
