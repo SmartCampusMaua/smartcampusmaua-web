@@ -6,7 +6,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import Head from "next/head";
 import { GenericSensor } from "@/database/dataTypes";
 import { supabase } from "@/database/supabaseClient";
-import { fetchSensors } from "@/database/timeseries";
+import { fetchEvseStatusNotification} from "@/database/timeseries";
 
 export default function Home() {
   const [sensors, setSensors] = useState<GenericSensor[]>([]);
@@ -37,21 +37,22 @@ export default function Home() {
     client.on("message", async (topic, message) => {
       try {
         const jsonObject = JSON.parse(message.toString());
-    
+        
         if (jsonObject.name === "MeterValues" && jsonObject.tags.deviceType === "EVSE") {
           const { forwardEnergy } = jsonObject.fields;
           const { chargePointId, connectorId, deviceId } = jsonObject.tags;
           const timestamp = new Date(jsonObject.timestamp);
-    
+          
+          const status = await fetchEvseStatusNotification(deviceId);
+
           const evse = new GenericSensor(
             chargePointId, // Name
             "EVSE", // Type
             [forwardEnergy], // Fields
-            [chargePointId, connectorId, deviceId], // Tags
+            [chargePointId, connectorId, deviceId, status], // Tags
             connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'), // Local
             timestamp
           );
-    
           setSensors((prevData) => {
             const existingEvse = prevData.find((item) => item.tags.includes(evse.tags[2])); // Match by deviceId
             if (existingEvse) {
@@ -515,6 +516,7 @@ export default function Home() {
                     <p><strong>Forward Energy:</strong> {parseFloat(evse.fields[0]).toFixed(4)} KWh</p>
                     <p><strong>Local: </strong> {evse.local}</p>
                     <p><strong>Type:</strong>{evse.tags[1].replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
+                    <p><strong>Status: </strong> {evse.tags[3]} </p>
 
                     <p><strong>Atualizado por último:</strong> {new Date(Number(evse.timestamp) * 1000).toLocaleString()}</p>
                     <div className="flex mt-2 space-x-2">
