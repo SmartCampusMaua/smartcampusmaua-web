@@ -460,6 +460,27 @@ const Sensores = () => {
                           <strong>Humidade 70 cm: </strong>{selectedSensor.fields[3]}
                         </li>
                       </ul>
+                    ) : selectedSensor.type === "VibrationAverage" ? (
+                      <ul>
+                        <li>
+                          <strong>VibrationAverageX: </strong>{selectedSensor.fields[0]}
+                        </li>
+                        <li>
+                          <strong>VibrationAveragey: </strong>{selectedSensor.fields[1]}
+                        </li>
+                        <li>
+                          <strong>VibrationAveragez: </strong>{selectedSensor.fields[2]}
+                        </li>
+                        <li>
+                          <strong>boardVoltage: </strong>{selectedSensor.fields[3]}
+                        </li>
+                        <li>
+                          <strong>Humidade: </strong>{selectedSensor.fields[4]}
+                        </li>
+                        <li>
+                          <strong>Temperatura: </strong>{selectedSensor.fields[5]}
+                        </li>
+                      </ul>
                     ) : selectedSensor.fields[0] === "Sensor Offline" ? (
                       <ul>
                         <li>
@@ -669,6 +690,27 @@ const Sensores = () => {
                           <strong>Humidade 70 cm: </strong>{alarmSensor.fields[3]}
                         </li>
                       </ul>
+                    ) : alarmSensor.type === "VibrationAverage" ? (
+                      <ul>
+                        <li>
+                          <strong>VibrationAverageX: </strong>{alarmSensor.fields[0]}
+                        </li>
+                        <li>
+                          <strong>VibrationAverageY: </strong>{alarmSensor.fields[1]}
+                        </li>
+                        <li>
+                          <strong>VibrationAverageZ: </strong>{alarmSensor.fields[2]}
+                        </li>
+                        <li>
+                          <strong>boardVoltage: </strong>{alarmSensor.fields[3]}
+                        </li>
+                        <li>
+                          <strong>Humidade: </strong>{alarmSensor.fields[4]}
+                        </li>
+                        <li>
+                          <strong>Temperatura: </strong>{alarmSensor.fields[5]}
+                        </li>
+                      </ul>
                     ) : alarmSensor.type === "Sensor Offline" ? (
                       <ul>
                         <li>
@@ -756,6 +798,16 @@ const Sensores = () => {
                       <option value={"soilMoistureDepthLevel1"}> Humidade 10 cm</option>
                       <option value={"soilMoistureDepthLevel2"}> Humidade 30 cm</option>
                       <option value={"soilMoistureDepthLevel3"}> Humidade 70 cm</option>
+                    </select>
+                  ) : alarmSensor.type === "VibrationAverage" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"vibrationAverageX"}> VibrationAverageX</option>
+                      <option value={"vibrationAverageY"}> VibrationAverageY</option>
+                      <option value={"vibrationAverageZ"}> VibrationAverageZ</option>
+                      <option value={"boardVoltage"}> boardVoltage</option>
+                      <option value={"humidity"}> humidade</option>
+                      <option value={"temperature"}> temperatura</option>
                     </select>
                   ) : (
                     <p></p>
@@ -1049,15 +1101,37 @@ const Sensores = () => {
                               <strong>Humidade 70 cm: </strong>{sensor.fields[3]}
                             </li>
                           </ul>
-                        ) : sensor.type === "Sensor Offline" ? (
+                        ) : sensor.type === "VibrationAverage" ? (
                           <ul>
                             <li>
-                              <strong>Sensor Offline</strong>
+                              <strong>VibrationAverageX: </strong>{sensor.fields[0]}
+                            </li>
+                            <li>
+                              <strong>VibrationAverageY: </strong>{sensor.fields[1]}
+                            </li>
+                            <li>
+                              <strong>VibrationAverageZ: </strong>{sensor.fields[2]}
+                            </li>
+                            <li>
+                              <strong>boardVoltage: </strong>{sensor.fields[3]}
+                            </li>
+                            <li>
+                              <strong>Humidade: </strong>{sensor.fields[4]}
+                            </li>
+                            <li>
+                              <strong>Temperatura: </strong>{sensor.fields[5]}
                             </li>
                           </ul>
-                        ) : (
-                          <p></p>
-                        )
+                        ) :
+                          sensor.type === "Sensor Offline" ? (
+                            <ul>
+                              <li>
+                                <strong>Sensor Offline</strong>
+                              </li>
+                            </ul>
+                          ) : (
+                            <p></p>
+                          )
                       }
                       {sensor.timestamp && (
                         <li>

@@ -132,6 +132,27 @@ const Alarmes = () => {
                   <strong>Índice UV: </strong>{sensor.fields[8]}
                 </li>
               </ul>
+            ) : sensor.type === "VibrationAverage" && sensor.fields[0] !== "Sensor Offline" ? (
+              <ul>
+                <li>
+                  <strong>VibrationAverageX: </strong>{sensor.fields[0]}
+                </li>
+                <li>
+                  <strong>VibrationAverageY: </strong>{sensor.fields[1]}
+                </li>
+                <li>
+                  <strong>VibrationAverageZ: </strong>{sensor.fields[2]}
+                </li>
+                <li>
+                  <strong>boardVoltage: </strong>{sensor.fields[3]}
+                </li>
+                <li>
+                  <strong>Humidade: </strong>{sensor.fields[4]}
+                </li>
+                <li>
+                  <strong>Temperatura: </strong>{sensor.fields[5]}
+                </li>
+              </ul>
             ) : sensor.fields[0] === "Sensor Offline" ? (
               <ul>
                 <li>
@@ -301,6 +322,30 @@ const Alarmes = () => {
                   }
                   case "soilMoistureDepthLevel3": {
                     currentValue = getNumericValue(sensor.fields[3]);
+                    break;
+                  }
+                  case "vibrationAverageX": {
+                    currentValue = getNumericValue(sensor.fields[0]);
+                    break;
+                  }
+                  case "vibrationAverageY": {
+                    currentValue = getNumericValue(sensor.fields[1]);
+                    break;
+                  }
+                  case "vibrationAverageZ": {
+                    currentValue = getNumericValue(sensor.fields[2]);
+                    break;
+                  }
+                  case "boardVoltage": {
+                    currentValue = getNumericValue(sensor.fields[3]);
+                    break;
+                  }
+                  case "humidity": {
+                    currentValue = getNumericValue(sensor.fields[4]);
+                    break;
+                  }
+                  case "temperature": {
+                    currentValue = getNumericValue(sensor.fields[5]);
                     break;
                   }
 
@@ -638,6 +683,16 @@ const Alarmes = () => {
                       <option value={"soilMoistureDepthLevel2"}> Humidade 30 cm</option>
                       <option value={"soilMoistureDepthLevel3"}> Humidade 70 cm</option>
                     </select>
+                  ) : selectedAlarme.type === "VibrationAverage" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"vibrationAverageX"}> VibrationAverageX</option>
+                      <option value={"vibrationAverageY"}> VibrationAverageY</option>
+                      <option value={"vibrationAverageZ"}> VibrationAverageZ</option>
+                      <option value={"boardVoltage"}> boardVoltage</option>
+                      <option value={"humidity"}> humidade</option>
+                      <option value={"temperature"}> temperatura</option>
+                    </select>
                   ) : (
                     <p></p>
                   )}
@@ -754,7 +809,10 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "solenoid3" ? "" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
-                                                                        alarme.triggerType === "soilMoistureDepthLevel3" ? "%" : ""
+                                                                        alarme.triggerType === "soilMoistureDepthLevel3" ? "%":
+                                                                          alarme.triggerType === "vibrationAverageX" ? " G":
+                                                                            alarme.triggerType === "vibrationAverageY" ? " G":
+                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" : ""
                             }
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
@@ -780,7 +838,9 @@ const Alarmes = () => {
                                                               alarme.triggerType === "rainLevel" ? " mm" :
                                                                 alarme.triggerType === "solarRadiation" ? " W/m²" :
                                                                   alarme.triggerType === "uvIndex" ? "" :
-                                                                    ""
+                                                                    alarme.triggerType === "vibrationAverageX" ? "G":
+                                                                      alarme.triggerType === "vibrationAverageY" ? "G":
+                                                                        alarme.triggerType === "vibrationAverageZ" ? "G" : ""
                                   }
                                 </>
                               )
@@ -906,7 +966,10 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "status" ? "Ao liberar carregador" : ''
+                                                                        alarme.triggerType === "status" ? "Ao liberar carregador": 
+                                                                          alarme.triggerType === "vibrationAverageX" ? " G":
+                                                                            alarme.triggerType === "vibrationAverageY" ? " G":
+                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" : ""
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
@@ -937,7 +1000,10 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "status" ? "" : ""
+                                                                        alarme.triggerType === "status" ? "" :
+                                                                          alarme.triggerType === "vibrationAverageX" ? " G":
+                                                                            alarme.triggerType === "vibrationAverageY" ? " G":
+                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" : ""
                                 }
                               </>
                             )

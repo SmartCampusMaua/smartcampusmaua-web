@@ -11,6 +11,7 @@ const apiUrlSoilMoisture3DepthLevels = "https://smartcampus-k8s.maua.br/api/time
 const apiUrlEvseStatusNotification = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/all?interval=30000";
 // const apiUrlEvseStartTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/all?interval=30";
 // const apiUrlEvseStopTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StTransaction/all?interval=30000";
+const apiUrlVibrationAverage = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/VibrationAverage/all?interval=30"
 
 async function fetchEvseStatusNotification(deviceId) {
   try {
@@ -83,6 +84,13 @@ async function fetchSoilMoisture3DepthLevels() {
 
   return data;
 }
+async function fetchVibrationAverage() {
+  const response = await fetch(apiUrlVibrationAverage);
+
+  const data = await response.json();
+
+  return data;
+}
 
 async function fetchAllSensors() {
   const luzes = await fetchSmartLight();
@@ -92,6 +100,7 @@ async function fetchAllSensors() {
   const weatherStation = await fetchWeatherStation();
   const sprinkler = await fetchSprinkler();
   const soilMoisture = await fetchSoilMoisture3DepthLevels();
+  const vibrationAvarage = await fetchVibrationAverage();
 
   return [...luzes,
   ...waterTanklevel,
@@ -99,7 +108,9 @@ async function fetchAllSensors() {
   ...energyMeter,
   ...weatherStation,
   ...sprinkler,
-  ...soilMoisture];
+  ...soilMoisture,
+  ...vibrationAvarage
+];
 };
 
 const sanitize = (value: any) => (value === "" || value === null ? "Indisponível" : value);
@@ -362,6 +373,46 @@ const fetchSensors = async () => {
               sanitize((Number(sensorData.fields.soilMoistureDepthLevel1) / 100).toFixed(0)) + " %",
               sanitize((Number(sensorData.fields.soilMoistureDepthLevel2) / 100).toFixed(0)) + " %",
               sanitize((Number(sensorData.fields.soilMoistureDepthLevel3) / 100).toFixed(0)) + " %",
+            ],
+            [sanitize(sensorData.tags.deviceId)],
+            "Indisponível",
+            new Date(Number(sensorData.timestamp) / 1e6)
+          );
+        }
+      } else if (sensorData.name === "VibrationAverage") {
+        sensorsInfo.forEach(sensorInfo => {
+          if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
+            newSensor = new GenericSensor(
+              sanitize(sensorInfo.Nome),
+              sensorData.name,
+              [
+                sanitize(Number(sensorData.fields.vibrationAverageX)) + " G",
+                sanitize(Number(sensorData.fields.vibrationAverageY)) + " G",
+                sanitize(Number(sensorData.fields.vibrationAverageZ)) + " G",
+                sanitize(sensorData.fields.boardVoltage) + " V",
+                sanitize(sensorData.fields.humidity) + " %",
+                sanitize(sensorData.fields.temperature) + " °C",                 
+              ],
+              [
+                sanitize(sensorData.tags.deviceId),
+              ],
+              sanitize(sensorInfo.Local),
+              new Date(Number(sensorData.timestamp) / 1e6)
+            );
+            sensorAlreadyExists = true;
+          }
+        });
+        if (!sensorAlreadyExists) {
+          newSensor = new GenericSensor(
+            "Indisponível",
+            sensorData.name,
+            [
+              sanitize(Number(sensorData.fields.vibrationAverageX)) + " G",
+                sanitize(Number(sensorData.fields.vibrationAverageY)) + " G",
+                sanitize(Number(sensorData.fields.vibrationAverageZ)) + " G",
+                sanitize(sensorData.fields.boardVoltage) + " V",
+                sanitize(sensorData.fields.humidity) + " %",
+                sanitize(sensorData.fields.temperature) + " °C",  
             ],
             [sanitize(sensorData.tags.deviceId)],
             "Indisponível",
