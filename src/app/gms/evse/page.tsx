@@ -496,58 +496,70 @@ export default function Home() {
 
       {!exportInfoPopupOpen && !alarmPopupOpen && (
         <div>
-          <Head>
-            <title>Carregadores EVSE</title>
-          </Head>
-          <main className="p-4 bg-white">
-            <h1 className="text-3xl font-bold text-center mb-8">
-              Dados dos Carregadores EVSE
-            </h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sensors.length > 0 ? (
-                sensors.map((evse, index) => (
-                  <div
-                    key={evse.tags[2]}
-                    className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
-                  >
-                    <h2 className="text-xl font-semibold mb-2">
-                      Dispositivo: {evse.tags[2]}
-                    </h2>
-                    <p><strong>Forward Energy:</strong> {parseFloat(evse.fields[0]).toFixed(4)} KWh</p>
-                    <p><strong>Local: </strong> {evse.local}</p>
-                    <p><strong>Type:</strong>{evse.tags[1].replace(/"/g, "").trim() === "0" ? " Charging Station" : " Charging Point"}</p>
-                    <p><strong>Status: </strong> {evse.tags[3]} </p>
-
-                    <p><strong>Atualizado por último:</strong> {new Date(Number(evse.timestamp) * 1000).toLocaleString()}</p>
-                    <div className="flex mt-2 space-x-2">
-                      <button
-                        onClick={() => {
-                          setExportInfoPopupOpen(true);
-                          setSelectedSensor(evse);
-                        }}
-                        className="bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
-                      >
-                        Exportar .csv
-                      </button>
-                      {evse.local !== "IMT" && (
+        <Head>
+          <title>Carregadores EVSE</title>
+        </Head>
+        <main className="p-4 bg-white">
+          <h1 className="text-3xl font-bold text-center mb-8">
+            Dados dos Carregadores EVSE
+          </h1>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sensors.length > 0
+              ? [...Array(3)].map((_, index) => (
+                  sensors[index] ? (
+                    <div
+                      key={sensors[index].tags[2]}
+                      className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
+                    >
+                      <h2 className="text-xl font-semibold mb-2">
+                        Dispositivo: {sensors[index].tags[2]}
+                      </h2>
+                      <p>
+                        <strong>Forward Energy:</strong>{" "}
+                        {parseFloat(sensors[index].fields[0]).toFixed(4)} KWh
+                      </p>
+                      <p>
+                        <strong>Local: </strong> {sensors[index].local}
+                      </p>
+                      <p>
+                        <strong>Type:</strong>
+                        {sensors[index].tags[1].replace(/"/g, "").trim() === "0"
+                          ? " Charging Station"
+                          : " Charging Point"}
+                      </p>
+                      <p>
+                        <strong>Status: </strong> {sensors[index].tags[3]}{" "}
+                      </p>
+                      <p>
+                        <strong>Atualizado por último:</strong>{" "}
+                        {new Date(Number(sensors[index].timestamp) * 1000).toLocaleString()}
+                      </p>
+                      <div className="flex mt-2 space-x-2">
                         <button
                           onClick={() => {
-                            setAlarmPopupOpen(!alarmPopupOpen);
-                            setAlarmSensor(evse);
+                            setExportInfoPopupOpen(true);
+                            setSelectedSensor(sensors[index]);
                           }}
-                          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                          className="bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
                         >
-                          Adicionar Alarme
+                          Exportar .csv
                         </button>
-                      )}
+                        {sensors[index].local !== "IMT" && (
+                          <button
+                            onClick={() => {
+                              setAlarmPopupOpen(!alarmPopupOpen);
+                              setAlarmSensor(sensors[index]);
+                            }}
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                          >
+                            Adicionar Alarme
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <>
-                  {[...Array(3)].map((_, index) => (
+                  ) : (
                     <div
-                      key={index}
+                      key={`loading-${index}`}
                       className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
                     >
                       <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
@@ -559,12 +571,27 @@ export default function Home() {
                       <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
                       <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                     </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </main>
-        </div>
+                  )
+                ))
+              : [...Array(3)].map((_, index) => (
+                  <div
+                    key={`loading-${index}`}
+                    className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
+                  >
+                    <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
+                    <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-5/6 mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-2/3 mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                  </div>
+                ))}
+          </div>
+        </main>
+      </div>
+      
       )}
     </DashboardLayout>
   );
