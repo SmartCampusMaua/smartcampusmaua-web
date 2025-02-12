@@ -481,6 +481,36 @@ const Sensores = () => {
                           <strong>Temperatura: </strong>{selectedSensor.fields[5]}
                         </li>
                       </ul>
+                    ) : selectedSensor.type === "Temperature8Point" ? (
+                      <ul>
+                        <li>
+                          <strong>Temperature1: </strong>{selectedSensor.fields[0]}
+                        </li>
+                        <li>
+                          <strong>Temperature2: </strong>{selectedSensor.fields[1]}
+                        </li>
+                        <li>
+                          <strong>Temperature3: </strong>{selectedSensor.fields[2]}
+                        </li>
+                        <li>
+                          <strong>Temperature4: </strong>{selectedSensor.fields[3]}
+                        </li>
+                        <li>
+                          <strong>Temperature5: </strong>{selectedSensor.fields[4]}
+                        </li>
+                        <li>
+                          <strong>Temperature6: </strong>{selectedSensor.fields[5]}
+                        </li>
+                        <li>
+                          <strong>Temperature7: </strong>{selectedSensor.fields[6]}
+                        </li>
+                        <li>
+                          <strong>Temperature8: </strong>{selectedSensor.fields[7]}
+                        </li>
+                        <li>
+                          <strong>boardVoltage: </strong>{selectedSensor.fields[8]}
+                        </li>
+                      </ul>
                     ) : selectedSensor.fields[0] === "Sensor Offline" ? (
                       <ul>
                         <li>
@@ -711,6 +741,36 @@ const Sensores = () => {
                           <strong>Temperatura: </strong>{alarmSensor.fields[5]}
                         </li>
                       </ul>
+                    ) : alarmSensor.type === "Temperature8Point" ? (
+                      <ul>
+                        <li>
+                          <strong>Temperature1: </strong>{alarmSensor.fields[0]}
+                        </li>
+                        <li>
+                          <strong>Temperature2: </strong>{alarmSensor.fields[1]}
+                        </li>
+                        <li>
+                          <strong>Temperature3: </strong>{alarmSensor.fields[2]}
+                        </li>
+                        <li>
+                          <strong>Temperature4: </strong>{alarmSensor.fields[3]}
+                        </li>
+                        <li>
+                          <strong>Temperature5: </strong>{alarmSensor.fields[4]}
+                        </li>
+                        <li>
+                          <strong>Temperature6: </strong>{alarmSensor.fields[5]}
+                        </li>
+                        <li>
+                          <strong>Temperature7: </strong>{alarmSensor.fields[6]}
+                        </li>
+                        <li>
+                          <strong>Temperature8: </strong>{alarmSensor.fields[7]}
+                        </li>
+                        <li>
+                          <strong>boardVoltage: </strong>{alarmSensor.fields[8]}
+                        </li>
+                      </ul>
                     ) : alarmSensor.type === "Sensor Offline" ? (
                       <ul>
                         <li>
@@ -808,6 +868,19 @@ const Sensores = () => {
                       <option value={"boardVoltage"}> boardVoltage</option>
                       <option value={"humidity"}> humidade</option>
                       <option value={"temperature"}> temperatura</option>
+                    </select>
+                  ) : alarmSensor.type === "Temperature8Point" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"temperature1"}> Temperature1</option>
+                      <option value={"temperature2"}> Temperature2</option>
+                      <option value={"temperature3"}> Temperature3</option>
+                      <option value={"temperature4"}> Temperature4</option>
+                      <option value={"temperature5"}> Temperature5</option>
+                      <option value={"temperature6"}> Temperature6</option>
+                      <option value={"temperature7"}> Temperature7</option>
+                      <option value={"temperature8"}> Temperature8</option>
+                      <option value={"boardVoltage"}> Board Voltage</option>
                     </select>
                   ) : (
                     <p></p>
@@ -1120,6 +1193,36 @@ const Sensores = () => {
                             </li>
                             <li>
                               <strong>Temperatura: </strong>{sensor.fields[5]}
+                            </li>
+                          </ul>
+                        ) : sensor.type === "Temperature8Point" ? (
+                          <ul>
+                            <li>
+                              <strong>Temperature1: </strong>{sensor.fields[0]}
+                            </li>
+                            <li>
+                              <strong>Temperature2: </strong>{sensor.fields[1]}
+                            </li>
+                            <li>
+                              <strong>Temperature3: </strong>{sensor.fields[2]}
+                            </li>
+                            <li>
+                              <strong>Temperature4: </strong>{sensor.fields[3]}
+                            </li>
+                            <li>
+                              <strong>Temperature5: </strong>{sensor.fields[4]}
+                            </li>
+                            <li>
+                              <strong>Temperature6: </strong>{sensor.fields[5]}
+                            </li>
+                            <li>
+                              <strong>Temperature7: </strong>{sensor.fields[6]}
+                            </li>
+                            <li>
+                              <strong>Temperature8: </strong>{sensor.fields[7]}
+                            </li>
+                            <li>
+                              <strong>boardVoltage: </strong>{sensor.fields[8]}
                             </li>
                           </ul>
                         ) :

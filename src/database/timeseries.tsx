@@ -12,6 +12,7 @@ const apiUrlEvseStatusNotification = "https://smartcampus-k8s.maua.br/api/timese
 // const apiUrlEvseStartTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/all?interval=30";
 // const apiUrlEvseStopTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StTransaction/all?interval=30000";
 const apiUrlVibrationAverage = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/VibrationAverage/all?interval=30"
+const apiUrlTemperature8Point = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Temperature8Point/all?interval=30"
 
 async function fetchEvseStatusNotification(deviceId) {
   try {
@@ -91,6 +92,13 @@ async function fetchVibrationAverage() {
 
   return data;
 }
+async function fetchTemperature8Point() {
+  const response = await fetch(apiUrlTemperature8Point);
+
+  const data = await response.json();
+
+  return data;
+}
 
 async function fetchAllSensors() {
   const luzes = await fetchSmartLight();
@@ -100,7 +108,8 @@ async function fetchAllSensors() {
   const weatherStation = await fetchWeatherStation();
   const sprinkler = await fetchSprinkler();
   const soilMoisture = await fetchSoilMoisture3DepthLevels();
-  const vibrationAvarage = await fetchVibrationAverage();
+  const vibrationAverage = await fetchVibrationAverage();
+  const temperature8Point = await fetchTemperature8Point();
 
   return [...luzes,
   ...waterTanklevel,
@@ -109,7 +118,8 @@ async function fetchAllSensors() {
   ...weatherStation,
   ...sprinkler,
   ...soilMoisture,
-  ...vibrationAvarage
+  ...vibrationAverage,
+  ...temperature8Point
 ];
 };
 
@@ -414,6 +424,53 @@ const fetchSensors = async () => {
                 sanitize(sensorData.fields.humidity) + " %",
                 sanitize(sensorData.fields.temperature) + " °C",  
             ],
+            [sanitize(sensorData.tags.deviceId)],
+            "Indisponível",
+            new Date(Number(sensorData.timestamp) / 1e6)
+          );
+        }
+        
+      } else if (sensorData.name === "Temperature8Point") {
+        sensorsInfo.forEach(sensorInfo => {
+          if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
+            newSensor = new GenericSensor(
+              sanitize(sensorInfo.Nome),
+              sensorData.name,
+              [
+                sanitize(Number(sensorData.fields.temperature1)) + " °C",
+                sanitize(Number(sensorData.fields.temperature2)) + " °C",
+                sanitize(Number(sensorData.fields.temperature3)) + " °C",
+                sanitize(Number(sensorData.fields.temperature4)) + " °C",
+                sanitize(Number(sensorData.fields.temperature5)) + " °C",
+                sanitize(Number(sensorData.fields.temperature6)) + " °C",
+                sanitize(Number(sensorData.fields.temperature7)) + " °C",
+                sanitize(Number(sensorData.fields.temperature8)) + " °C",
+                sanitize(sensorData.fields.boardVoltage) + " V",
+              ],
+              [
+                sanitize(sensorData.tags.deviceId),
+              ],
+              sanitize(sensorInfo.Local),
+              new Date(Number(sensorData.timestamp) / 1e6)
+            );
+            sensorAlreadyExists = true;
+          }
+        });
+        if (!sensorAlreadyExists) {
+          newSensor = new GenericSensor(
+            "Indisponível",
+            sensorData.name,
+              [
+                sanitize(Number(sensorData.fields.temperature1)) + " °C",
+                sanitize(Number(sensorData.fields.temperature2)) + " °C",
+                sanitize(Number(sensorData.fields.temperature3)) + " °C",
+                sanitize(Number(sensorData.fields.temperature4)) + " °C",
+                sanitize(Number(sensorData.fields.temperature5)) + " °C",
+                sanitize(Number(sensorData.fields.temperature6)) + " °C",
+                sanitize(Number(sensorData.fields.temperature7)) + " °C",
+                sanitize(Number(sensorData.fields.temperature8)) + " °C",
+                sanitize(sensorData.fields.boardVoltage) + " V",
+              ],
             [sanitize(sensorData.tags.deviceId)],
             "Indisponível",
             new Date(Number(sensorData.timestamp) / 1e6)
