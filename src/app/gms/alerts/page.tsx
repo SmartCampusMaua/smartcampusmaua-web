@@ -153,6 +153,36 @@ const Alarmes = () => {
                   <strong>Temperatura: </strong>{sensor.fields[5]}
                 </li>
               </ul>
+            ) : sensor.type === "Temperature8Point" && sensor.fields[0] !== "Sensor Offline" ? (
+              <ul>
+                <li>
+                  <strong>Temperature1: </strong>{sensor.fields[0]}
+                </li>
+                <li>
+                  <strong>Temperature2: </strong>{sensor.fields[1]}
+                </li>
+                <li>
+                  <strong>Temperature3: </strong>{sensor.fields[2]}
+                </li>
+                <li>
+                  <strong>Temperature4: </strong>{sensor.fields[3]}
+                </li>
+                <li>
+                  <strong>Temperature5: </strong>{sensor.fields[4]}
+                </li>
+                <li>
+                  <strong>Temperature6: </strong>{sensor.fields[5]}
+                </li>
+                <li>
+                  <strong>Temperature7: </strong>{sensor.fields[6]}
+                </li>
+                <li>
+                  <strong>Temperature8: </strong>{sensor.fields[7]}
+                </li>
+                <li>
+                  <strong>boardVoltage: </strong>{sensor.fields[8]}
+                </li>
+              </ul>
             ) : sensor.fields[0] === "Sensor Offline" ? (
               <ul>
                 <li>
@@ -346,6 +376,43 @@ const Alarmes = () => {
                   }
                   case "temperature": {
                     currentValue = getNumericValue(sensor.fields[5]);
+                    break;
+                  }
+
+                  case "temperature1": {
+                    currentValue = getNumericValue(sensor.fields[0]);
+                    break;
+                  }
+                  case "temperature2": {
+                    currentValue = getNumericValue(sensor.fields[2]);
+                    break;
+                  }
+                  case "temperature3": {
+                    currentValue = getNumericValue(sensor.fields[3]);
+                    break;
+                  }
+                  case "temperature4": {
+                    currentValue = getNumericValue(sensor.fields[4]);
+                    break;
+                  }
+                  case "temperature5": {
+                    currentValue = getNumericValue(sensor.fields[5]);
+                    break;
+                  }
+                  case "temperature6": {
+                    currentValue = getNumericValue(sensor.fields[6]);
+                    break;
+                  }
+                  case "temperature7": {
+                    currentValue = getNumericValue(sensor.fields[7]);
+                    break;
+                  }
+                  case "temperature8": {
+                    currentValue = getNumericValue(sensor.fields[8]);
+                    break;
+                  }
+                  case "boardVoltage": {
+                    currentValue = getNumericValue(sensor.fields[9]);
                     break;
                   }
 
@@ -693,6 +760,19 @@ const Alarmes = () => {
                       <option value={"humidity"}> humidade</option>
                       <option value={"temperature"}> temperatura</option>
                     </select>
+                  ) : selectedAlarme.type === "Temperature8Point" ? (
+                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                      <option value={""}></option>
+                      <option value={"temperature1"}> Temperature1</option>
+                      <option value={"temperature2"}> Temperature2</option>
+                      <option value={"temperature3"}> Temperature3</option>
+                      <option value={"temperature4"}> Temperature4</option>
+                      <option value={"temperature5"}> Temperature5</option>
+                      <option value={"temperature6"}> Temperature6</option>
+                      <option value={"temperature7"}> Temperature7</option>
+                      <option value={"temperature8"}> Temperature8</option>
+                      <option value={"boardVoltage"}> Board Voltage</option>
+                    </select>
                   ) : (
                     <p></p>
                   )}
@@ -809,10 +889,18 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "solenoid3" ? "" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
-                                                                        alarme.triggerType === "soilMoistureDepthLevel3" ? "%":
-                                                                          alarme.triggerType === "vibrationAverageX" ? " G":
-                                                                            alarme.triggerType === "vibrationAverageY" ? " G":
-                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" : ""
+                                                                        alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
+                                                                          alarme.triggerType === "vibrationAverageX" ? " G" :
+                                                                            alarme.triggerType === "vibrationAverageY" ? " G" :
+                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" :
+                                                                                alarme.triggerType === "temperature1" ? "°C" :
+                                                                                  alarme.triggerType === "temperature2" ? "°C" :
+                                                                                    alarme.triggerType === "temperature3" ? "°C" :
+                                                                                      alarme.triggerType === "temperature4" ? "°C" :
+                                                                                        alarme.triggerType === "temperature5" ? "°C" :
+                                                                                          alarme.triggerType === "temperature6" ? "°C" :
+                                                                                            alarme.triggerType === "temperature7" ? "°C" :
+                                                                                              alarme.triggerType === "temperature8" ? "°C" : ""
                             }
                           </p>
                           <p className={`mr-2 font-medium text-black`}>
@@ -838,9 +926,17 @@ const Alarmes = () => {
                                                               alarme.triggerType === "rainLevel" ? " mm" :
                                                                 alarme.triggerType === "solarRadiation" ? " W/m²" :
                                                                   alarme.triggerType === "uvIndex" ? "" :
-                                                                    alarme.triggerType === "vibrationAverageX" ? "G":
-                                                                      alarme.triggerType === "vibrationAverageY" ? "G":
-                                                                        alarme.triggerType === "vibrationAverageZ" ? "G" : ""
+                                                                    alarme.triggerType === "vibrationAverageX" ? "G" :
+                                                                      alarme.triggerType === "vibrationAverageY" ? "G" :
+                                                                        alarme.triggerType === "vibrationAverageZ" ? "G" :
+                                                                          alarme.triggerType === "temperature1" ? "°C" :
+                                                                            alarme.triggerType === "temperature2" ? "°C" :
+                                                                              alarme.triggerType === "temperature3" ? "°C" :
+                                                                                alarme.triggerType === "temperature4" ? "°C" :
+                                                                                  alarme.triggerType === "temperature5" ? "°C" :
+                                                                                    alarme.triggerType === "temperature6" ? "°C" :
+                                                                                      alarme.triggerType === "temperature7" ? "°C" :
+                                                                                        alarme.triggerType === "temperature8" ? "°C" : ""
                                   }
                                 </>
                               )
@@ -966,10 +1062,18 @@ const Alarmes = () => {
                                                                   alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "status" ? "Ao liberar carregador": 
-                                                                          alarme.triggerType === "vibrationAverageX" ? " G":
-                                                                            alarme.triggerType === "vibrationAverageY" ? " G":
-                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" : ""
+                                                                        alarme.triggerType === "status" ? "Ao liberar carregador" :
+                                                                          alarme.triggerType === "vibrationAverageX" ? " G" :
+                                                                            alarme.triggerType === "vibrationAverageY" ? " G" :
+                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" :
+                                                                                alarme.triggerType === "temperature1" ? "°C" :
+                                                                                  alarme.triggerType === "temperature2" ? "°C" :
+                                                                                    alarme.triggerType === "temperature3" ? "°C" :
+                                                                                      alarme.triggerType === "temperature4" ? "°C" :
+                                                                                        alarme.triggerType === "temperature5" ? "°C" :
+                                                                                          alarme.triggerType === "temperature6" ? "°C" :
+                                                                                            alarme.triggerType === "temperature7" ? "°C" :
+                                                                                              alarme.triggerType === "temperature8" ? "°C" : ""
                           }
                         </p>
                         <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
@@ -1001,9 +1105,17 @@ const Alarmes = () => {
                                                                     alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
                                                                       alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
                                                                         alarme.triggerType === "status" ? "" :
-                                                                          alarme.triggerType === "vibrationAverageX" ? " G":
-                                                                            alarme.triggerType === "vibrationAverageY" ? " G":
-                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" : ""
+                                                                          alarme.triggerType === "vibrationAverageX" ? " G" :
+                                                                            alarme.triggerType === "vibrationAverageY" ? " G" :
+                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" :
+                                                                                alarme.triggerType === "temperature1" ? "°C" :
+                                                                                  alarme.triggerType === "temperature2" ? "°C" :
+                                                                                    alarme.triggerType === "temperature3" ? "°C" :
+                                                                                      alarme.triggerType === "temperature4" ? "°C" :
+                                                                                        alarme.triggerType === "temperature5" ? "°C" :
+                                                                                          alarme.triggerType === "temperature6" ? "°C" :
+                                                                                            alarme.triggerType === "temperature7" ? "°C" :
+                                                                                              alarme.triggerType === "temperature8" ? "°C" : ""
                                 }
                               </>
                             )
