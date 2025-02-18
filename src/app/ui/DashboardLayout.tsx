@@ -1,62 +1,62 @@
-"use client";
 
-import Head from 'next/head';
-import { useEffect, useState } from 'react';
+// import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation'
 
-const Layout = ({ children }) => {
-  const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
+export const experimental_ppr = true;
+ 
+export default function Layout({ children }: { children: React.ReactNode }) {
+  // const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
 
   const pathname = usePathname();
-  const [darkMode, setDarkMode] = useState(false); // Example state for dark mode
-  const [displayName, setDisplayName] = useState("Carregando..."); // Estado para o nome de exibição
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  // const [darkMode, setDarkMode] = useState(false); // Example state for dark mode
+  // const [displayName, setDisplayName] = useState("Carregando..."); // Estado para o nome de exibição
+  // const [isSidebarVisible, setIsSidebarVisible] = useState(false); 
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // Implement your dark mode logic here
-  };
+  // const toggleDarkMode = () => {
+  //   setDarkMode(!darkMode);
+  //   // Implement your dark mode logic here
+  // };
 
-  const toggleSidebar = () => {
-    setIsSidebarVisible(!isSidebarVisible);
-  };
+  // const toggleSidebar = () => {
+  //   setIsSidebarVisible(!isSidebarVisible);
+  // };
 
-  const router = useRouter();
+  // const router = useRouter();
 
-  const handleMicrosoftLogout = async () => {
-    // router.push(`${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}/api/auth/logout`)
-    router.push(`${SMARTCAMPUSMAUA_SERVER}/api/auth/logout`)
-  };
+  // const handleMicrosoftLogout = async () => {
+  //   // router.push(`${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}/api/auth/logout`)
+  //   router.push(`${SMARTCAMPUSMAUA_SERVER}/api/auth/logout`)
+  // };
 
-  useEffect(() => {
-    const fetchDisplayName = async () => {
-      try {
-        // const response = await fetch(`${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}/api/auth/displayname`);
-        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/displayname`);
-        if (!response.ok) {
-          throw new Error('Erro ao obter o nome de exibição');
-        }
-        const data = await response.json();
-        setDisplayName(data.displayName || "Nome não disponível"); // Atualiza o estado com o nome de exibição
-      } catch (error) {
-        console.error(error);
-        setDisplayName("Erro ao carregar nome"); // Define um estado de erro se a chamada falhar
-      }
-    };
+  // useEffect(() => {
+  //   const fetchDisplayName = async () => {
+  //     try {
+  //       // const response = await fetch(`${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}/api/auth/displayname`);
+  //       const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/displayname`);
+  //       if (!response.ok) {
+  //         throw new Error('Erro ao obter o nome de exibição');
+  //       }
+  //       const data = await response.json();
+  //       setDisplayName(data.displayName || "Nome não disponível"); // Atualiza o estado com o nome de exibição
+  //     } catch (error) {
+  //       console.error(error);
+  //       setDisplayName("Erro ao carregar nome"); // Define um estado de erro se a chamada falhar
+  //     }
+  //   };
 
-    fetchDisplayName(); // Chama a função para buscar o nome de exibição
-  // }, [`${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}/api/auth/displayname`]); // O efeito depende da URL da API
-}, [`${SMARTCAMPUSMAUA_SERVER}/api/auth/displayname`]); // O efeito depende da URL da API
+  //   fetchDisplayName(); // Chama a função para buscar o nome de exibição
+  //   // }, [`${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}/api/auth/displayname`]); // O efeito depende da URL da API
+  // }, [`${SMARTCAMPUSMAUA_SERVER}/api/auth/displayname`]); // O efeito depende da URL da API
 
   return (
     <>
-      <Head>
+      {/* <Head> */}
         {/* Define meta tags, title, etc. */}
-        <title>EcoVision</title>
-        <meta name="description" content="Your description here" />
+        {/* <title>EcoVision</title>
+        <meta name="description" content="Your description here" /> */}
         {/* Add more meta tags as needed */}
-      </Head>
-      <nav
+      {/* </Head> */}
+      {/* <nav
         className={`fixed top-0 z-50 w-full border-b border-neutral-300 bg-white`}>
         <div className="mx-auto flex h-14 items-center justify-between px-6">
           <div className="flex space-x-8 items-center">
@@ -72,12 +72,12 @@ const Layout = ({ children }) => {
               </div>
               <p className="font-outfit font-medium lg:text-2xl text-xl">
                 Smart<span className="dark:text-white">Campus Mauá</span>
-                {/* {true && (
+                {true && (
                   <span
                     className="ml-1.5 font-outfit font-normal text-tertiary">
                     | admin
                   </span>
-                )} */}
+                )}
               </p>
             </div>
           </div>
@@ -98,18 +98,29 @@ const Layout = ({ children }) => {
                 />
               </svg>
             </button>
+            <form action={async () => {
+              'use server';
+              await signOut();
+            }}>
+              <button className="flex h-[48px] w-full grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-gray-100 hover:text-gray-600 md:flex-none md:justify-start md:p-2 md:px-3">
+                <div className="hidden md:block">Sign Out</div>
+              </button>
+            </form>
+            {SignOutPage()}
           </div>
         </div>
-      </nav>
+      </nav> */}
       <div
         className="mx-auto flex h-screen divide-x divide-neutral-300">
-        <nav className={`fixed top-14 w-60 overflow-y-auto px-5 py-8 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-full'}`}
+        {/* <nav className={`fixed top-14 w-60 overflow-y-auto px-5 py-8 ${isSidebarVisible ? 'translate-x-0' : '-translate-x-full'}`} */}
+        <nav className={`fixed top-14 w-60 overflow-y-auto px-5 py-8 ${true ? 'translate-x-0' : '-translate-x-full'}`}
+
           style={{ height: 'calc(100vh - 56px)' }}>
           <div className="flex h-full flex-col justify-between space-y-16">
             <div className="space-y-4">
               <div className="flex flex-col space-y-4">
                 <a
-                  href="/gms/devices"
+                  href="/dashboard/devices"
                   className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition  ${pathname === "/devices" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
                     }`}
                 >
@@ -122,23 +133,23 @@ const Layout = ({ children }) => {
                   <span>SENSORES</span>
                 </a>
                 <a
-                  href="/gms/evse"
+                  href="/dashboard/evse"
                   className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition  ${pathname === "/devices" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
                     }`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                  <g>
-                      <path fill="none" d="M0 0h24v24H0z"/>
-                      <path d="M20 11h-1V7h1V4h2v3h1v4h-1v7a3 3 0 0 1-6 0v-4h-2v5h1v2H2v-2h1V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v8h2a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7zm-8 8V5H5v14h7zm-3-8h3l-4 6v-4H5l4-6v4z"/>
-                  </g>
+                    <g>
+                      <path fill="none" d="M0 0h24v24H0z" />
+                      <path d="M20 11h-1V7h1V4h2v3h1v4h-1v7a3 3 0 0 1-6 0v-4h-2v5h1v2H2v-2h1V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v8h2a2 2 0 0 1 2 2v4a1 1 0 0 0 2 0v-7zm-8 8V5H5v14h7zm-3-8h3l-4 6v-4H5l4-6v4z" />
+                    </g>
                   </svg>
                   <span>EVSE</span>
-                </a> 
+                </a>
               </div>
               <div className="mt-4 flex flex-col space-y-3">
                 <a
                   className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition ${pathname.match(/alerts/g) ? 'water-button-pressed' : 'water-button-unpressed'}`}
-                  href="/gms/alerts"
+                  href="/dashboard/alerts"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 18">
                     <path
@@ -152,8 +163,8 @@ const Layout = ({ children }) => {
                 >
               </div>
               <div className="flex flex-col space-y-4">
-              <a
-                  href="/gms/actuator"
+                <a
+                  href="/dashboard/actuator"
                   className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition  ${pathname === "/post" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
                     }`}
                 >
@@ -165,15 +176,15 @@ const Layout = ({ children }) => {
                   </svg>
                   <span>ATUADORES</span>
                 </a>
-                
+
               </div>
-              
+
             </div>
-            
+
             <div>
               <a
                 className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition ${pathname.match(/settings/g) ? 'water-button-pressed' : 'water-button-unpressed'}`}
-                href="/gms/settings"
+                href="/dashboard/settings"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                   <path
@@ -182,21 +193,23 @@ const Layout = ({ children }) => {
                   />
                 </svg>
                 <span>CONFIGURAÇÕES</span></a>
-                <a
+              <a
                 className={`flex items-center space-x-2 text-nowrap rounded-full px-3 py-2.5 text-[0.825rem] tracking-wide transition ${pathname.match(/docs/g) ? 'water-button-pressed' : 'water-button-unpressed'}`}
                 href="https://smartcampus-k8s.maua.br/docs" target="_blank"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                   <path
-                        d="M4 5.5H9C10.1046 5.5 11 6.39543 11 7.5V16.5C11 17.0523 10.5523 17.5 10 17.5H4C3.44772 17.5 3 17.0523 3 16.5V6.5C3 5.94772 3.44772 5.5 4 5.5ZM14 19.5C13.6494 19.5 13.3128 19.4398 13 19.3293V19.5C13 20.0523 12.5523 20.5 12 20.5C11.4477 20.5 11 20.0523 11 19.5V19.3293C10.6872 19.4398 10.3506 19.5 10 19.5H4C2.34315 19.5 1 18.1569 1 16.5V6.5C1 4.84315 2.34315 3.5 4 3.5H9C10.1947 3.5 11.2671 4.02376 12 4.85418C12.7329 4.02376 13.8053 3.5 15 3.5H20C21.6569 3.5 23 4.84315 23 6.5V16.5C23 18.1569 21.6569 19.5 20 19.5H14ZM13 7.5V16.5C13 17.0523 13.4477 17.5 14 17.5H20C20.5523 17.5 21 17.0523 21 16.5V6.5C21 5.94772 20.5523 5.5 20 5.5H15C13.8954 5.5 13 6.39543 13 7.5ZM5 7.5H9V9.5H5V7.5ZM15 7.5H19V9.5H15V7.5ZM19 10.5H15V12.5H19V10.5ZM5 10.5H9V12.5H5V10.5ZM19 13.5H15V15.5H19V13.5ZM5 13.5H9V15.5H5V13.5Z"
-                        fill="#000000"
+                    d="M4 5.5H9C10.1046 5.5 11 6.39543 11 7.5V16.5C11 17.0523 10.5523 17.5 10 17.5H4C3.44772 17.5 3 17.0523 3 16.5V6.5C3 5.94772 3.44772 5.5 4 5.5ZM14 19.5C13.6494 19.5 13.3128 19.4398 13 19.3293V19.5C13 20.0523 12.5523 20.5 12 20.5C11.4477 20.5 11 20.0523 11 19.5V19.3293C10.6872 19.4398 10.3506 19.5 10 19.5H4C2.34315 19.5 1 18.1569 1 16.5V6.5C1 4.84315 2.34315 3.5 4 3.5H9C10.1947 3.5 11.2671 4.02376 12 4.85418C12.7329 4.02376 13.8053 3.5 15 3.5H20C21.6569 3.5 23 4.84315 23 6.5V16.5C23 18.1569 21.6569 19.5 20 19.5H14ZM13 7.5V16.5C13 17.0523 13.4477 17.5 14 17.5H20C20.5523 17.5 21 17.0523 21 16.5V6.5C21 5.94772 20.5523 5.5 20 5.5H15C13.8954 5.5 13 6.39543 13 7.5ZM5 7.5H9V9.5H5V7.5ZM15 7.5H19V9.5H15V7.5ZM19 10.5H15V12.5H19V10.5ZM5 10.5H9V12.5H5V10.5ZM19 13.5H15V15.5H19V13.5ZM5 13.5H9V15.5H5V13.5Z"
+                    fill="#000000"
                   />
                 </svg>
                 <span>DOCUMENTAÇÃO</span></a>
             </div>
           </div>
         </nav>
-        <div className={`w-full h-full size-full pb-8 pt-14 ${isSidebarVisible ? 'ml-60 hidden lg:block' : 'ml-0'}`}>
+        {/* <div className={`w-full h-full size-full pb-8 pt-14 ${isSidebarVisible ? 'ml-60 hidden lg:block' : 'ml-0'}`}> */}
+        <div className={`w-full h-full size-full pb-8 pt-14 ${true ? 'ml-60 hidden lg:block' : 'ml-0'}`}>
+
           {children}
         </div>
       </div>
@@ -214,5 +227,3 @@ const Layout = ({ children }) => {
     </>
   );
 };
-
-export default Layout;

@@ -1,7 +1,7 @@
 "use client";
 
 import Head from 'next/head';
-import DashboardLayout from "@/app/gms/components/DashboardLayout";
+import DashboardLayout from "@/app/dashboard/components/DashboardLayout";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/database/supabaseClient';
 

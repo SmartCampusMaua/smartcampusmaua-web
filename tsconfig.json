@@ -33,7 +33,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "src/app/dashboard/components/DashboardLayout.tsx"  ],
   "exclude": [
     "node_modules"
   ]

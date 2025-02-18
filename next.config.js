@@ -4,6 +4,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    ppr: 'incremental',
+  },
   // async redirects() {
   //   return [
   //     {

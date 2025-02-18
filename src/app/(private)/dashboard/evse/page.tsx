@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import mqtt from "mqtt";
-import DashboardLayout from "../components/DashboardLayout";
+import DashboardLayout from "../../../ui/DashboardLayout";
 import Head from "next/head";
 import { GenericSensor } from "@/database/dataTypes";
 import { supabase } from "@/database/supabaseClient";

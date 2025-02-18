@@ -1,4 +1,4 @@
-export { auth as middleware } from "@/app/authjs"
+export { auth as middleware } from "@/auth"
 // import { NextRequest, NextResponse } from 'next/server';
 // import { NextResponse, NextRequest } from "next/server";
 // import { auth } from "./auth";

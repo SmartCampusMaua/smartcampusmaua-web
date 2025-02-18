@@ -18,7 +18,7 @@
 		"date-fns": "^4.1.0",
 		"mqtt": "^5.10.3",
 		"n": "^9.2.1",
-		"next": "15.1.1-canary.25",
+		"next": "15.2.0-canary.64",
 		"next-auth": "5.0.0-beta.25",
 		"papaparse": "^5.4.1",
 		"react": "^18",
