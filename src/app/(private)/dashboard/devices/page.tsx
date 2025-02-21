@@ -2,20 +2,27 @@
 
 import Head from "next/head";
 import { useState, useEffect } from "react";
-import { GenericSensor } from "@/database/dataTypes";
-import { supabase } from '@/database/supabaseClient';
+import { GenericSensor } from "@/lib/dataTypes";
+import { supabase } from '@/lib/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { fetchSensors } from '@/database/timeseries';
-import Header from "@/app/ui/header";
-import DashboardLayout from "../../../ui/DashboardLayout";
+import { fetchSensors } from '@/lib/timeseries';
+import { User } from '@/lib/userSession'
 
 const Sensores = () => {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [sensors, setSensors] = useState<GenericSensor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filteredSensores, setFilteredSensores] = useState<GenericSensor[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
+
+  useEffect(() => {
+    async function fetchEmail() {
+      const user = await User();
+      setUserEmail(user.email);
+    }
+    fetchEmail();
+  }, []);
 
   useEffect(() => {
     async function getSensors() {
@@ -54,9 +61,6 @@ const Sensores = () => {
 
   const handleNewAlarm = async () => {
     setAlarmInsertAttempt(true);
-    const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-    const userEmailResponse = await response.json();
-    const userEmail = userEmailResponse.displayName;
 
     const { data: userData, error } = await supabase
       .from('User')
@@ -67,9 +71,6 @@ const Sensores = () => {
       console.error('Error fetching user data: ', error);
     } else {
       if (triggerType !== "" && triggerAt !== "") {
-        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-        const userEmailResponse = await response.json();
-        const userEmail = userEmailResponse.displayName;
 
         const { data: userData, error } = await supabase
           .from('User')
@@ -324,7 +325,7 @@ const Sensores = () => {
   return (
     <>
       {/* <Header/> */}
-      <DashboardLayout>
+      <>
         {exportInfoPopupOpen ? (
           <div className="flex flex-col w-full">
             <div className="m-4">
@@ -1274,7 +1275,7 @@ const Sensores = () => {
             )}
           </div>
         )}
-      </DashboardLayout>
+      </>
     </>
   );
 };

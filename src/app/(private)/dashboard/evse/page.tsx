@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import mqtt from "mqtt";
-import DashboardLayout from "../../../ui/DashboardLayout";
 import Head from "next/head";
-import { GenericSensor } from "@/database/dataTypes";
-import { supabase } from "@/database/supabaseClient";
-import { fetchEvseStatusNotification} from "@/database/timeseries";
+import { GenericSensor } from "@/lib/dataTypes";
+import { supabase } from "@/lib/supabaseClient";
+import { fetchEvseStatusNotification} from "@/lib/timeseries";
+import  { User }  from '@/app/lib/userSession';
+
 
 export default function Home() {
   const [sensors, setSensors] = useState<GenericSensor[]>([]);
@@ -205,13 +206,21 @@ export default function Home() {
   const [alarmSensor, setAlarmSensor] = useState<GenericSensor>();
   const [trigger, setTrigger] = useState<string>();
   const [alarmPopupOpen, setAlarmPopupOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    async function fetchEmail() {
+      const user = await User();
+      setUserEmail(user.email);
+    }
+    fetchEmail();
+  }, []);
+
 
   const handleNewAlarm = async () => {
     setAlarmInsertAttempt(true);
-    const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-    const userEmailResponse = await response.json();
-    const userEmail = userEmailResponse.displayName;
-
+    if (!userEmail) return; 
     const { data: userData, error } = await supabase
       .from('User')
       .select('id')
@@ -221,9 +230,6 @@ export default function Home() {
       console.error('Error fetching user data: ', error);
     } else {
       if (triggerType !== "" && triggerAt !== "") {
-        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-        const userEmailResponse = await response.json();
-        const userEmail = userEmailResponse.displayName;
 
         const { data: userData, error } = await supabase
           .from('User')
@@ -299,7 +305,7 @@ export default function Home() {
   }
 
   return (
-    <DashboardLayout>
+    <>
       {exportInfoPopupOpen ? (
         <div className="flex flex-col w-full">
           <div className="m-4">
@@ -593,6 +599,6 @@ export default function Home() {
       </div>
       
       )}
-    </DashboardLayout>
+    </>
   );
 }

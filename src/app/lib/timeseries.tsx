@@ -1,6 +1,6 @@
-import { GenericSensor } from '@/database/dataTypes';
+import { GenericSensor } from '@/lib/dataTypes';
 import { useState } from 'react';
-import { supabase } from '@/database/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 const apiUrlSmartLight = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/SmartLight/all?interval=30";
 const apiUrlWaterTankLevel = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/WaterTankLevel/all?interval=30";
 const apiUrlHydrometer = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Hydrometer/all?interval=30";

@@ -1,30 +1,31 @@
 "use client";
 
 import Head from 'next/head';
-import DashboardLayout from "@/app/dashboard/components/DashboardLayout";
-import Header from "@/app/ui/header";
 
 import { useState, useEffect } from 'react';
-import { AlarmeValue, GenericSensor } from '@/database/dataTypes';
-import { supabase } from '@/database/supabaseClient';
-
-
+import { AlarmeValue, GenericSensor } from '@/lib/dataTypes';
+import { supabase } from '@/lib/supabaseClient';
+import  { User }  from '@/app/lib/userSession';
 
 const Actuator = () => {
-  const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
-
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [alarmes, setAlarmes] = useState<AlarmeValue[]>([]);
   const [actionSensor, setActionSensor] = useState<string>("");
   const [actuatorAlarm, setActuatorAlarm] = useState<string>("");
   const [showInfo, setShowInfo] = useState(false); // for info button
   const [sensors] = useState<GenericSensor[]>([]);
 
+  useEffect(() => {
+    async function fetchEmail() {
+      const user = await User();
+      setUserEmail(user.email);
+    }
+    fetchEmail();
+  }, []);
 
   useEffect(() => {
+    if (!userEmail) return; 
     const getAlarmes = async () => {
-      const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-      const userEmailResponse = await response.json();
-      const userEmail = userEmailResponse.displayName;
 
       const { data: userData, error } = await supabase
         .from('User')
@@ -155,7 +156,7 @@ const Actuator = () => {
     };
 
     getAlarmes();
-  }, []);
+  }, [userEmail]);
 
 
   const handleSprinklersPost = async (actuatorAlarm) => {
@@ -235,11 +236,11 @@ const Actuator = () => {
 
 
   return (
-    <DashboardLayout>
-      <Head>
+    <>
+     <Head>
         <title>Atuadores</title>
       </Head>
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="grid place-items-center gap-6 p-6"> {/*this is the part that builds the grid if some day we get more cards => "sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4" */}
           <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
             <div className=" left-0 text-black-400 px-2 text-sm font-semibold">
@@ -326,7 +327,7 @@ const Actuator = () => {
           
         </div>
       </div>
-    </DashboardLayout>
+      </>
   );
 };
 

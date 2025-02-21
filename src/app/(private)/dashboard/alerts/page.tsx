@@ -1,18 +1,18 @@
 "use client";
 
 import Head from 'next/head';
-import DashboardLayout from "@/app/dashboard/components/DashboardLayout";
 import { useState, useEffect } from 'react';
-import { GenericSensor, AlarmeValue, AlarmeHistory } from '@/database/dataTypes';
-import { fetchEvseStatusNotification, fetchSensorByDEVEUI, fetchSensors } from '@/database/timeseries';
+import { GenericSensor, AlarmeValue, AlarmeHistory } from '@/lib/dataTypes';
+import { fetchEvseStatusNotification, fetchSensorByDEVEUI, fetchSensors } from '@/lib/timeseries';
 import { formatDistanceToNow } from 'date-fns';
 
-import { supabase } from '@/database/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { ptBR } from 'date-fns/locale';
+import  { User }  from '@/app/lib/userSession'; // user data
+
 
 const Alarmes = () => {
-  const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
-
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [alarmes, setAlarmes] = useState<AlarmeValue[]>([]);
   const [alarmEditPopupOpen, setAlarmEditPopupOpen] = useState(false);
   const [triggerType, setTriggerType] = useState('boardVoltage');
@@ -25,6 +25,14 @@ const Alarmes = () => {
   const [selectedAlarme, setSelectedAlarme] = useState<AlarmeValue>();
   const [sendingNewAlarm, setSendingNewAlarm] = useState<boolean>(false);
   const [selectedSensor, setSelectedSensor] = useState<GenericSensor | null>(null);
+
+  useEffect(() => {
+    async function fetchEmail() {
+      const user = await User();
+      setUserEmail(user.email);
+    }
+    fetchEmail();
+  }, []);
 
   useEffect(() => {
     async function getSensors() {
@@ -214,11 +222,10 @@ const Alarmes = () => {
   };
 
   useEffect(() => {
+    if (!userEmail) return; 
     const getAlarmes = async () => {
       try {
-        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-        const userEmailResponse = await response.json();
-        const userEmail = userEmailResponse.displayName;
+        
 
         const { data: userData, error: userError } = await supabase
           .from('User')
@@ -451,7 +458,7 @@ const Alarmes = () => {
     };
 
     getAlarmes();
-  }, [sensors, sendingNewAlarm]);
+  }, [sensors, sendingNewAlarm, userEmail]);
 
   const openEditPopup = (alarme: AlarmeValue) => {
     const sensor = sensors.find((sensor) => sensor.tags.includes(alarme.deveui));
@@ -483,9 +490,7 @@ const Alarmes = () => {
 
   const handleEditAlarm = async (editedAlarme: AlarmeValue): Promise<boolean> => {
     try {
-      const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-      const userEmailResponse = await response.json();
-      const userEmail = userEmailResponse.displayName;
+      
 
       const { data: userData, error } = await supabase
         .from('User')
@@ -585,10 +590,6 @@ const Alarmes = () => {
   async function getAlarmHistory(alarm: AlarmeValue) {
     setHistoryPopupOpen(true)
 
-    const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-    const userEmailResponse = await response.json();
-    const userEmail = userEmailResponse.displayName;
-
     const { data: userData, error } = await supabase
       .from('User')
       .select('id')
@@ -630,7 +631,6 @@ const Alarmes = () => {
   }
 
   return (
-    <DashboardLayout>
       <div>
         <Head>
           <title>Alarmes</title>
@@ -1140,7 +1140,7 @@ const Alarmes = () => {
             </div>
           </div>)}
       </div>
-    </DashboardLayout>
+    
   );
 };
 

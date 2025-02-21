@@ -1,52 +1,55 @@
 "use client";
 
 import Head from 'next/head';
-import DashboardLayout from "@/app/dashboard/components/DashboardLayout";
 import { useState, useEffect } from 'react';
-import { supabase } from '@/database/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
+import  { User }  from '@/app/lib/userSession';
 
 const Configurations = () => {
-    const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
-
+    const [userEmail, setUserEmail] = useState<string | null>(null);
     const [DDD, setDDD] = useState("");
     const [fone, setFone] = useState("");
     const [numIncompleto, setAviso] = useState(false);
     const [currentPhone, setCurrentPhone] = useState<string | null>("");
 
     useEffect(() => {
-        fetchCurrentPhone();
+      async function fetchEmail() {
+        const user = await User();
+        setUserEmail(user.email);
+      }
+      fetchEmail();
     }, []);
-
-    const fetchCurrentPhone = async () => {
+  
+    useEffect(() => {
+      if (!userEmail) return; 
+      const fetchCurrentPhone = async () => {
         try {
-            const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-            const dataEmail = await response.json();
-
-            const { data, error } = await supabase
-                .from('User')
-                .select('phone')
-                .eq('email', dataEmail.displayName)
-                .single();
-
-            if (error) {
-                console.error('Error fetching current phone from database', error);
-            } else {
-                setCurrentPhone(data.phone || "");
-            }
+          const { data, error } = await supabase
+            .from("User")
+            .select("phone")
+            .eq("email", userEmail)
+            .single();
+  
+          if (error) {
+            console.error("Error fetching current phone from lib", error);
+          } else {
+            setCurrentPhone(data.phone || "");
+          }
         } catch (error) {
-            console.error('Error fetching current phone:', error);
+          console.error("Error fetching current phone:", error);
         }
-    };
+      };
+  
+      fetchCurrentPhone();
+    }, [userEmail]); 
 
     const deletePhone = async () => {
       try {
-        const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-        const dataEmail = await response.json();
     
         const { data, error } = await supabase
           .from('User')
           .update({ phone: "" })
-          .eq('email', dataEmail.displayName)
+          .eq('email', userEmail)
           .select(); 
     
         if (error) {
@@ -77,22 +80,20 @@ const Configurations = () => {
     const handleEnviarClick = () => {
         if (DDD.length === 2 && fone.length === 9) {
             setAviso(false);
-            updateDatabasePhones();
+            updatelibPhones();
         } else setAviso(true);
     };
 
-    const updateDatabasePhones = async () => {
+    const updatelibPhones = async () => {
         try {
-            const response = await fetch(`${SMARTCAMPUSMAUA_SERVER}/api/auth/email`);
-            const dataEmail = await response.json();
-
+            
             const { error } = await supabase
                 .from('User')
                 .update({ phone: (DDD + fone) })
-                .eq('email', dataEmail.displayName);
+                .eq('email', userEmail);
 
             if (error) {
-                console.error('Error updating phone in database', error);
+                console.error('Error updating phone in lib', error);
             } else {
                 setCurrentPhone(DDD + fone);
             }
@@ -102,7 +103,7 @@ const Configurations = () => {
     };
 
     return (
-      <DashboardLayout>
+      <>
           <Head>
               <title>Configurações</title>
           </Head>
@@ -166,7 +167,7 @@ const Configurations = () => {
                   )}
               </div>
           </div>
-      </DashboardLayout>
+      </>
   );
   
 };
