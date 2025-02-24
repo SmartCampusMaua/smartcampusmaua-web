@@ -13,11 +13,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
       <Header toggleSidebar={toggleSidebar} />
 
-      <div className={`transition-transform duration-800 ${isSidebarOpen ? "w-64" : "w-0"}`}>
+      <div className={`transition-transform duration-800 pt-16 ${isSidebarOpen ? "w-64" : "w-0"}`}>
         <Sidenav isOpen={isSidebarOpen} />
       </div>
 
-      <div className="flex-grow p-6 md:overflow-y-auto md:p-12 py-8">{children}</div>
+      <div className="flex-grow p-6 md:overflow-y-auto md:pt-20 py-8">{children}</div>
     </div>
   );
 }

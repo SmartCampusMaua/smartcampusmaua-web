@@ -107,7 +107,7 @@ const Configurations = () => {
           <Head>
               <title>Configurações</title>
           </Head>
-          <div className="p-6 max-w-3xl mx-auto">
+          <div className="max-w-3xl mx-auto">
               <h1 className="text-2xl font-semibold text-gray-800 mb-6">Número celular para notificações</h1>
   
               <div className="bg-white p-6 rounded-md border border-gray-300 mb-6">

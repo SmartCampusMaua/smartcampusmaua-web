@@ -10,7 +10,7 @@ export default async function Page() {
       <Head>
         <title>SmartCampus Mauá</title>
       </Head>
-      <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12">
+      <div className="flex min-h-screen items-center justify-center sm:p-6 md:p-8 lg:p-12">
         <div className="rounded-xl bg-white shadow-xl p-6 sm:p-8 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 xl:w-2/3 animate-fade-in">
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800">
@@ -38,7 +38,7 @@ export default async function Page() {
             </Link>
 
             <Link
-              href="https://mauaracing.maua.br/en-US"
+              href="https://smartcampus.maua.br/node/dash/#!/0?socketid=VreT6feV6Zxd4x7rAAJj"
               className="flex flex-col items-center justify-between bg-gradient-to-tl from-indigo-100 to-indigo-200 text-white rounded-lg shadow-lg hover:opacity-90 transition-all p-6 space-y-4 group overflow-hidden"
             >
               <div className="w-full max-w-xs mx-auto flex justify-center">
@@ -46,7 +46,7 @@ export default async function Page() {
               </div>
               <div className="text-center overflow-hidden">
                 <h2 className="font-bold text-blue-900 relative">
-                  Mauá Racing
+                  Dashboard (exemplo)
                 </h2>
               </div>
             </Link>

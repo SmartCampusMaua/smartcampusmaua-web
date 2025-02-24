@@ -964,7 +964,7 @@ const Alarmes = () => {
             </div>
           </div>
         ) : (
-          <div className="flex-col space-around justify-center items-center p-8">
+          <div className="flex-col space-around justify-center items-center">
             <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {alarmes.map((alarme, index) => {
                 const isTriggered = alarme.triggerAt === "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt === "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
