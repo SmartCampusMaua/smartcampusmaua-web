@@ -1,19 +1,26 @@
-"use client";
+// "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
-export default function Page() {
-  
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ lang: string }>
+}) {
+  // const [loading, setLoading] = useState(false);
+  // const router = useRouter();
 
-  const handleLogin = () => {
-    setLoading(true);
-    router.push("/api/auth/signin");
-  };
+  // const handleLogin = () => {
+  //   // setLoading(true);
+  //   router.push("/api/auth/signin");
+  // };
+
+  const lang = (await params).lang;
+
 
   return (
     <main className="flex h-screen flex-col p-6 overflow-hidden">
@@ -26,7 +33,7 @@ export default function Page() {
           alt="SmartCampus Mauá Logo"
         />
       </div>
-      
+
       {/* Content Section */}
       <div className="flex flex-1 flex-col gap-4 py-6 md:flex-row overflow-hidden">
         <div className="flex flex-col justify-center gap-6 rounded-lg bg-white px-6 py-8 md:w-2/5 md:px-16 shadow-lg">
@@ -40,12 +47,11 @@ export default function Page() {
           <p className="text-xl text-gray-800 md:text-3xl md:leading-normal">
             <strong>Bem-vindo ao SmartCampus Mauá!</strong> Uma plataforma desenvolvida para aprimorar sua experiência no campus com soluções inteligentes e inovação.
           </p>
-          <button
+          {/* <button
             onClick={handleLogin}
             disabled={loading}
-            className={`flex items-center gap-5 self-start rounded-lg px-6 py-3 text-sm font-medium text-white transition-colors md:text-base ${
-              loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className={`flex items-center gap-5 self-start rounded-lg px-6 py-3 text-sm font-medium text-white transition-colors md:text-base ${loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+              }`}
           >
             {loading ? (
               <>
@@ -65,9 +71,14 @@ export default function Page() {
                 <span>Log in</span> <ArrowRightIcon className="w-5 md:w-6" />
               </>
             )}
-          </button>
+          </button> */}
+          {/* <Link href={"/api/auth/signin"} className="bg-blue-500 border rounded-sm px-5"> */}
+          <Link href={"/api/auth/signin"} className="bg-blue-600 hover:bg-blue-700 gap-5 self-start rounded-lg px-6 py-3 text-sm font-medium text-white transition-colors md:text-base">
+
+            Login
+          </Link>
         </div>
-        
+
         {/* Image Section */}
         <div className="flex items-center justify-center p-4 md:w-3/5 md:px-20 md:py-8">
           <Image
