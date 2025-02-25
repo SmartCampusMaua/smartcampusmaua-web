@@ -156,7 +156,7 @@ const fetchSensors = async () => {
                 sanitize((Number(sensorData.fields.batteryVoltage) / 1000).toFixed(1)) + " V",
                 sanitize(sensorData.fields.humidity) + " %",
                 sanitize((Math.pow(Number(sensorData.fields.luminosity), -3.746) * 140000000000000).toFixed(1)) + " lux",
-                sanitize(sensorData.fields.movement),
+                sanitize(sensorData.fields.movementCounter),
                 sanitize(sensorData.fields.temperature) + " °C"
               ],
               [sanitize(sensorData.tags.deviceId)],
@@ -175,7 +175,7 @@ const fetchSensors = async () => {
               sanitize((Number(sensorData.fields.batteryVoltage) / 1000).toFixed(1)) + " V",
               sanitize(sensorData.fields.humidity) + " %",
               sanitize((Math.pow(Number(sensorData.fields.luminosity), -3.746) * 140000000000000).toFixed(1)) + " lux",
-              sanitize(sensorData.fields.movement),
+              sanitize(sensorData.fields.movementCounter),
               sanitize(sensorData.fields.temperature) + " °C"
             ],
             [sanitize(sensorData.tags.deviceId)],
@@ -221,7 +221,7 @@ const fetchSensors = async () => {
               sensorData.name,
               [
                 sanitize(sensorData.fields.boardVoltage).toFixed(1) + " V",
-                sanitize(sensorData.fields.counter)
+                sanitize(sensorData.fields.litreCounter)
               ],
               [sanitize(sensorData.tags.deviceId)],
               sanitize(sensorInfo.Local),
@@ -236,7 +236,7 @@ const fetchSensors = async () => {
             sensorData.name,
             [
               sanitize(sensorData.fields.boardVoltage).toFixed(1) + " V",
-              sanitize(sensorData.fields.counter)
+              sanitize(sensorData.fields.litreCounter)
             ],
             [sanitize(sensorData.tags.deviceId)],
             "Indisponível",

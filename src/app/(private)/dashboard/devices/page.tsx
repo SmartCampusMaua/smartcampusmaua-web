@@ -365,7 +365,7 @@ const Sensores = () => {
                             <strong>Luminosidade: </strong>{selectedSensor.fields[3]}
                           </li>
                           <li>
-                            <strong>Movement: </strong>{selectedSensor.fields[4]}
+                            <strong>MovementCounter: </strong>{selectedSensor.fields[4]}
                           </li>
                           <li>
                             <strong>Temperatura: </strong>{selectedSensor.fields[5]}
@@ -625,7 +625,7 @@ const Sensores = () => {
                             <strong>Luminosidade: </strong>{alarmSensor.fields[3]}
                           </li>
                           <li>
-                            <strong>Movement: </strong>{alarmSensor.fields[4]}
+                            <strong>MovementCounter: </strong>{alarmSensor.fields[4]}
                           </li>
                           <li>
                             <strong>Temperatura: </strong>{alarmSensor.fields[5]}
@@ -812,7 +812,7 @@ const Sensores = () => {
                         <option value={"humidity"}> humidity</option>
                         <option value={"luminosity"}> luminosity</option>
                         <option value={"temperature"}> temperature</option>
-                        <option value={"movement"}> movement</option>
+                        <option value={"movementCounter"}> movementCounter</option>
                       </select>
                     ) : alarmSensor.type === "WaterTankLevel" ? (
                       <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
@@ -824,7 +824,7 @@ const Sensores = () => {
                       <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
                         <option value={""}></option>
                         <option value={"boardVoltage"}> boardVoltage</option>
-                        <option value={"counter"}> counter</option>
+                        <option value={"litreCounter"}> litreCounter</option>
                       </select>
                     ) : alarmSensor.type === "EnergyMeter" ? (
                       <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
@@ -1079,7 +1079,7 @@ const Sensores = () => {
                                 <strong>Luminosidade: </strong>{sensor.fields[3]}
                               </li>
                               <li>
-                                <strong>Movement: </strong>{sensor.fields[4]}
+                                <strong>Movement Counter: </strong>{sensor.fields[4]}
                               </li>
                               <li>
                                 <strong>Temperatura: </strong>{sensor.fields[5]}
@@ -1100,7 +1100,7 @@ const Sensores = () => {
                                 <strong>boardVoltage: </strong>{sensor.fields[0]}
                               </li>
                               <li>
-                                <strong>Counter: </strong>{sensor.fields[1]}
+                                <strong>LitreCounter: </strong>{sensor.fields[1]}
                               </li>
                             </ul>
                           ) : sensor.type === "EnergyMeter" && sensor.fields[0] ? (
