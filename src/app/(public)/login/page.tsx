@@ -20,8 +20,10 @@ export default async function Page({
   const sP = await searchParams;
 
   return (
-    <main className="min-h-screen flex flex-col justify-center items-center p-6">
-      <div className="flex flex-col justify-center items-center">
+    <main className="min-h-screen flex flex-col justify-center items-center p-8">
+      {/* Main Container with padding */}
+      <div className="flex flex-col justify-center items-center space-y-12">
+        {/* Logo container with space between */}
         <div className="max-w-full px-4">
           <Image
             className=""
@@ -31,8 +33,10 @@ export default async function Page({
             height={160}
           />
         </div>
-        <div className="flex flex-col items-center  justify-center">
-          <div className="flex items-center justify-center space-x-4">
+        
+        {/* Title container with more spacing */}
+        <div className="flex flex-col items-center justify-center space-y-6">
+          <div className="flex items-center justify-center space-x-8">
             <Image
               className="h-24 w-auto"
               src="/assets/images/logo_smartcampus.svg"
@@ -45,11 +49,12 @@ export default async function Page({
             </h1>
           </div>
 
-          <div>
+          {/* Button and Sign-in section with increased spacing */}
+          <div className="space-y-5">
             {Object.values(providerMap).map((provider) => (
               <form
                 key={provider.id}
-                className="space-y-3"
+                className="space-y-4"
                 action={async () => {
                   "use server";
                   try {
@@ -75,7 +80,6 @@ export default async function Page({
             ))}
           </div>
         </div>
-
 
       </div>
     </main>

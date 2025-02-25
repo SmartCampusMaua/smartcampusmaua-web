@@ -5,8 +5,8 @@ import mqtt from "mqtt";
 import Head from "next/head";
 import { GenericSensor } from "@/lib/dataTypes";
 import { supabase } from "@/lib/supabaseClient";
-import { fetchEvseStatusNotification} from "@/lib/timeseries";
-import  { User }  from '@/app/lib/userSession';
+import { fetchEvseStatusNotification } from "@/lib/timeseries";
+import { User } from '@/app/lib/userSession';
 
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
     client.on("connect", () => {
       client.subscribe("IMT/EVSE/MeterValues/+/up/imt", (err) => {
         if (err) {
-          console.error(`Erro na conexão: ${broker} --> ${err}`);
+          console.log(`Erro na conexão: ${broker} --> ${err}`);
         } else {
           console.log(`Conectado ao broker: ${broker}`);
         }
@@ -38,12 +38,12 @@ export default function Home() {
     client.on("message", async (topic, message) => {
       try {
         const jsonObject = JSON.parse(message.toString());
-        
+
         if (jsonObject.name === "MeterValues" && jsonObject.tags.deviceType === "EVSE") {
           const { forwardEnergy } = jsonObject.fields;
           const { chargePointId, connectorId, deviceId } = jsonObject.tags;
           const timestamp = new Date(jsonObject.timestamp);
-          
+
           const status = await fetchEvseStatusNotification(deviceId);
 
           const evse = new GenericSensor(
@@ -70,10 +70,10 @@ export default function Home() {
       }
     });
 
-  return () => {
-    client.end();
-  };
-}, []);
+    return () => {
+      client.end();
+    };
+  }, []);
 
 
   const getMaxDate = () => {
@@ -199,7 +199,6 @@ export default function Home() {
   };
 
   const [alarmInsertAttempt, setAlarmInsertAttempt] = useState<boolean>(false);
-  const SMARTCAMPUSMAUA_SERVER = `${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_URL}:${process.env.NEXT_PUBLIC_SMARTCAMPUSMAUA_SERVER_PORT}`;
   const [triggerType, setTriggerType] = useState('');
   const [triggerAt, setTriggerAt] = useState<string>();
   const [alarmName, setAlarmName] = useState<string>('');
@@ -220,7 +219,7 @@ export default function Home() {
 
   const handleNewAlarm = async () => {
     setAlarmInsertAttempt(true);
-    if (!userEmail) return; 
+    if (!userEmail) return;
     const { data: userData, error } = await supabase
       .from('User')
       .select('id')
@@ -502,30 +501,42 @@ export default function Home() {
 
       {!exportInfoPopupOpen && !alarmPopupOpen && (
         <div>
-        <Head>
-          <title>Carregadores EVSE</title>
-        </Head>
-        <main className="p-4 bg-white">
-          <h1 className="text-3xl font-bold text-center mb-8">
-            Dados dos Carregadores EVSE
-          </h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sensors.length > 0
-              ? [...Array(3)].map((_, index) => (
+          <Head>
+            <title>Carregadores EVSE</title>
+          </Head>
+          <main className="bg-white">
+            <h1 className="text-3xl font-bold text-center mb-8">
+              Dados dos Carregadores EVSE
+            </h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sensors.length > 0
+                ? [...Array(3)].map((_, index) => (
                   sensors[index] ? (
                     <div
                       key={sensors[index].tags[2]}
                       className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
                     >
-                      <h2 className="text-xl font-semibold mb-2">
-                        Dispositivo: {sensors[index].tags[2]}
-                      </h2>
+                      {sensors[index].tags[1].replace(/"/g, "").trim() === "0"
+                        ? <h2 className="text-xl font-semibold mb-2">
+                          Central De Carregadores
+                        </h2>
+                        : <h2 className="text-xl font-semibold mb-2">
+                          Carregador do {sensors[index].local}
+                        </h2>}
+
+                      {/* <h2 className="text-xl font-semibold mb-2">
+                        Carregador do {sensors[index].local}
+                      </h2> */}
+
                       <p>
                         <strong>Forward Energy:</strong>{" "}
                         {parseFloat(sensors[index].fields[0]).toFixed(4)} KWh
                       </p>
-                      <p>
+                      {/* <p>
                         <strong>Local: </strong> {sensors[index].local}
+                      </p> */}
+                      <p>
+                        <strong>Device ID: </strong> {sensors[index].tags[2]}
                       </p>
                       <p>
                         <strong>Type:</strong>
@@ -566,7 +577,7 @@ export default function Home() {
                   ) : (
                     <div
                       key={`loading-${index}`}
-                      className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
+                      className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 "
                     >
                       <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
                       <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
@@ -579,10 +590,10 @@ export default function Home() {
                     </div>
                   )
                 ))
-              : [...Array(3)].map((_, index) => (
+                : [...Array(3)].map((_, index) => (
                   <div
                     key={`loading-${index}`}
-                    className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 animate-pulse"
+                    className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 "
                   >
                     <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
                     <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
@@ -594,10 +605,10 @@ export default function Home() {
                     <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                   </div>
                 ))}
-          </div>
-        </main>
-      </div>
-      
+            </div>
+          </main>
+        </div>
+
       )}
     </>
   );

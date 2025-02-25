@@ -37,8 +37,8 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
             <Image
               priority
               src="/assets/images/logo_maua.svg"
-              height={50}
-              width={50}
+              height={100}
+              width={100}
               alt="IMT - Instituto Mauá de Tecnologia"
               className="h-10 w-20"
             />
@@ -50,7 +50,7 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
 
         <div className="flex items-center space-x-3">
           {user && (
-            <div className="hidden sm:block">
+            <div className="hidden font-bold sm:block">
               {user.name}
             </div>
           )}

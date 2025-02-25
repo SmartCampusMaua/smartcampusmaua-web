@@ -240,7 +240,7 @@ const Actuator = () => {
      <Head>
         <title>Atuadores</title>
       </Head>
-      <div className="flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center overflow-hidden pt-16">
         <div className="grid place-items-center gap-6 p-6"> {/*this is the part that builds the grid if some day we get more cards => "sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4" */}
           <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
             <div className=" left-0 text-black-400 px-2 text-sm font-semibold">

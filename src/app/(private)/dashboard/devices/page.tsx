@@ -946,20 +946,20 @@ const Sensores = () => {
                 <p className="text-2xl text-black">Carregando...</p>
               </div>
             ) : (
-              <div className="container mx-auto p-8">
+              <div className="container mx-auto">
                 {/* Title */}
                 <h1 className="text-3xl font-bold mb-8 text-center">Dados dos Sensores</h1>
 
                 {/* Button to show or hide the list */}
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="mb-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg "
+                  className="mb-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg "
                 >
                   {isDropdownOpen ? "Esconder lista de sensores" : "Lista de sensores"}
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute bg-gray-50 border rounded-lg shadow-lg mt-2 w-80 max-h-80 overflow-y-auto transition-all duration-300 ease-in-out opacity-0 transform translate-y-4 opacity-100 translate-y-0">
+                  <div className="absolute bg-gray-50 border rounded-lg shadow-lg mt-2 max-w-80 max-h-80 overflow-y-auto transition-all duration-300 ease-in-out opacity-0 transform translate-y-4 opacity-100 translate-y-0">
                     <ul className="space-y-3 p-4">
                       {selectedSensorsExport.length === 0 ? (
                         <div className="text-center text-gray-600">Selecione sensores para exportar seus dados em .csv</div>
@@ -1022,7 +1022,7 @@ const Sensores = () => {
 
                     {/* Export Button */}
                     {selectedSensorsExport.length > 0 && (
-                      <div className="mt-4 flex justify-center">
+                      <div className="m-4 flex justify-center">
                         <button
                           onClick={() => handleListExportSensors(interval)}
                           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"
