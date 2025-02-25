@@ -46,7 +46,7 @@ export default async function Page() {
               </div>
               <div className="text-center overflow-hidden">
                 <h2 className="font-bold text-blue-900 relative">
-                  Dashboard (exemplo)
+                  Dashboard
                 </h2>
               </div>
             </Link>

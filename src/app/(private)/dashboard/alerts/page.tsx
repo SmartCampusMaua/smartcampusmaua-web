@@ -8,7 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 import { supabase } from '@/lib/supabaseClient';
 import { ptBR } from 'date-fns/locale';
-import  { User }  from '@/app/lib/userSession'; // user data
+import { User } from '@/app/lib/userSession'; // user data
 
 
 const Alarmes = () => {
@@ -74,7 +74,7 @@ const Alarmes = () => {
                   <strong>Luminosidade: </strong>{sensor.fields[3]}
                 </li>
                 <li>
-                  <strong>Movement: </strong>{sensor.fields[4]}
+                  <strong>MovementCounter: </strong>{sensor.fields[4]}
                 </li>
                 <li>
                   <strong>Temperatura: </strong>{sensor.fields[5]}
@@ -95,7 +95,7 @@ const Alarmes = () => {
                   <strong>boardVoltage: </strong>{sensor.fields[0]}
                 </li>
                 <li>
-                  <strong>Counter: </strong>{sensor.fields[1]}
+                  <strong>LitreCounter: </strong>{sensor.fields[1]}
                 </li>
               </ul>
             ) : sensor.type === "EnergyMeter" && sensor.fields[0] !== "Sensor Offline" ? (
@@ -222,10 +222,10 @@ const Alarmes = () => {
   };
 
   useEffect(() => {
-    if (!userEmail) return; 
+    if (!userEmail) return;
     const getAlarmes = async () => {
       try {
-        
+
 
         const { data: userData, error: userError } = await supabase
           .from('User')
@@ -277,7 +277,7 @@ const Alarmes = () => {
                     currentValue = getNumericValue(sensor.fields[3]).toFixed(1);
                     break;
                   }
-                  case "movement": {
+                  case "movementCounter": {
                     currentValue = getNumericValue(sensor.fields[4]).toFixed(1);
                     break;
                   }
@@ -286,6 +286,10 @@ const Alarmes = () => {
                     break;
                   }
                   case "distance": {
+                    currentValue = getNumericValue(sensor.fields[1]).toFixed(1);
+                    break;
+                  }
+                  case "litreCounter": {
                     currentValue = getNumericValue(sensor.fields[1]).toFixed(1);
                     break;
                   }
@@ -490,7 +494,7 @@ const Alarmes = () => {
 
   const handleEditAlarm = async (editedAlarme: AlarmeValue): Promise<boolean> => {
     try {
-      
+
 
       const { data: userData, error } = await supabase
         .from('User')
@@ -631,250 +635,251 @@ const Alarmes = () => {
   }
 
   return (
-      <div>
-        <Head>
-          <title>Alarmes</title>
-        </Head>
+    <div>
+      <Head>
+        <title>Alarmes</title>
+      </Head>
 
-        {/* Edição de alarme */}
-        {loading || sendingNewAlarm ? (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-2xl text-black">Carregando...</p>
+      {/* Edição de alarme */}
+      {loading || sendingNewAlarm ? (
+        <div className="flex justify-center items-center h-64">
+          <p className="text-2xl text-black">Carregando...</p>
+        </div>
+      ) : alarmEditPopupOpen && selectedAlarme ? (
+        <div className="flex flex-col w-full">
+          <div className="m-4">
+            <button
+              onClick={() => setAlarmEditPopupOpen(!alarmEditPopupOpen)}
+              className="m-2 bg-red-500 hover:bg-red-700 text-white text-2xl font-bold py-3 px-6 rounded">
+              Voltar
+            </button>
           </div>
-        ) : alarmEditPopupOpen && selectedAlarme ? (
-          <div className="flex flex-col w-full">
-            <div className="m-4">
-              <button
-                onClick={() => setAlarmEditPopupOpen(!alarmEditPopupOpen)}
-                className="m-2 bg-red-500 hover:bg-red-700 text-white text-2xl font-bold py-3 px-6 rounded">
-                Voltar
-              </button>
-            </div>
-            <div className="container max-w-screen-lg mx-auto grid grid-cols-1 sm:grid-cols-2 justify-items-center">
-              <div className="m-2 flex justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
-                <div className="m-2">
-                  <p className="font-bold text-3xl text-center">Alarme Selecionado</p>
-                  <strong>Nome do alarme:</strong> {selectedAlarme.alarmName || "Sem nome"}
-                  <SensorDetails sensor={selectedSensor} />
-                  <ul className="text-sm space-y-2 font-medium">
-                    <li>
-                      <strong>Tipo:</strong> {selectedAlarme.type}
-                    </li>
-                    <li>
-                      <strong>Valor escolhido:</strong> {selectedAlarme.triggerType}
-                    </li>
-                    <li>
-                      <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " :
-                        selectedAlarme.triggerAt === "lower" ? "Abaixo de " : selectedAlarme.triggerAt === "true" ? "Em " : " Em "}
-                      {selectedAlarme.triggerAt === "higher" ? selectedAlarme.trigger :
-                        selectedAlarme.triggerAt === "lower" ? selectedAlarme.trigger : selectedAlarme.triggerAt === "true" ? selectedAlarme.triggerAt : selectedAlarme.triggerAt}
-                    </li>
-                    <li>
-                      {
-                        selectedAlarme.triggerAt === "true" || selectedAlarme.triggerAt === "false" ? (
-                          <div></div>
-                        ) : (
-                          <>
-                            <strong>Valor atual:</strong> {selectedAlarme.trigger}
-                          </>
-                        )
-                      }
-                    </li>
-                    <li>
-                      <strong>Ação ao disparar o alarme:</strong> {selectedAlarme.actionSensor}
-                    </li>
-                  </ul>
-                </div>
+          <div className="container max-w-screen-lg mx-auto grid grid-cols-1 sm:grid-cols-2 justify-items-center">
+            <div className="m-2 flex justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
+              <div className="m-2">
+                <p className="font-bold text-3xl text-center">Alarme Selecionado</p>
+                <strong>Nome do alarme:</strong> {selectedAlarme.alarmName || "Sem nome"}
+                <SensorDetails sensor={selectedSensor} />
+                <ul className="text-sm space-y-2 font-medium">
+                  <li>
+                    <strong>Tipo:</strong> {selectedAlarme.type}
+                  </li>
+                  <li>
+                    <strong>Valor escolhido:</strong> {selectedAlarme.triggerType}
+                  </li>
+                  <li>
+                    <strong>Tocar:</strong> {selectedAlarme.triggerAt === "higher" ? "Acima de " :
+                      selectedAlarme.triggerAt === "lower" ? "Abaixo de " : selectedAlarme.triggerAt === "true" ? "Em " : " Em "}
+                    {selectedAlarme.triggerAt === "higher" ? selectedAlarme.trigger :
+                      selectedAlarme.triggerAt === "lower" ? selectedAlarme.trigger : selectedAlarme.triggerAt === "true" ? selectedAlarme.triggerAt : selectedAlarme.triggerAt}
+                  </li>
+                  <li>
+                    {
+                      selectedAlarme.triggerAt === "true" || selectedAlarme.triggerAt === "false" ? (
+                        <div></div>
+                      ) : (
+                        <>
+                          <strong>Valor atual:</strong> {selectedAlarme.trigger}
+                        </>
+                      )
+                    }
+                  </li>
+                  <li>
+                    <strong>Ação ao disparar o alarme:</strong> {selectedAlarme.actionSensor}
+                  </li>
+                </ul>
               </div>
-              <div className="m-2 flex flex-col justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
-                <div className="m-2">
-                  <p className="font-bold text-3xl text-center">Editar Alarme</p>
-                  <p>
-                    Digite um nome para o seu alarme:
-                  </p>
-                  <input type="text" id="alarmName" className="mx-1 w-100 border border-black rounded p-1 text-lg m-2" placeholder="Nome" value={alarmName} onChange={(event) => setAlarmName(event.target.value)} />
-                  <p>
-                    Escolha o campo para o alarme
-                  </p>
-                  {selectedAlarme.type === "SmartLight" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"batteryVoltage"}> batteryVoltage</option>
-                      <option value={"humidity"}> humidity</option>
-                      <option value={"luminosity"}> luminosity</option>
-                      <option value={"temperature"}> temperature</option>
-                      <option value={"movement"}> movement</option>
-                    </select>
-                  ) : selectedAlarme.type === "WaterTankLevel" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"distance"}> distance</option>
-                    </select>
-                  ) : selectedAlarme.type === "Hydrometer" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"counter"}> counter</option>
-                    </select>
-                  ) : selectedAlarme.type === "EnergyMeter" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"forwardEnergy"}> forwardEnergy</option>
-                      <option value={"reverseEnergy"}> reverseEnergy</option>
-                    </select>
-                  ) : selectedAlarme.type === "WeatherStation" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={"emwAtmPres"}> Pressão Atmosférica</option>
-                      <option value={"emwAvgWindSpeed"}> Velocidade do Vento</option>
-                      <option value={"emwGustWindSpeed"}> Velocidade Rajada de Vento</option>
-                      <option value={"emwHumidity"}> Humidade</option>
-                      <option value={"emwLuminosity"}> Luminosidade</option>
-                      <option value={"emwRainLevel"}> Nivel de Chuva</option>
-                      <option value={"emwSolarRadiation"}> Radiação Solar</option>
-                      <option value={"emwTemperature"}> Temperatura</option>
-                      <option value={"emwUv"}> Índice UV</option>
-                    </select>
-                  ) : selectedAlarme.type === "Sprinkler" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={""}></option>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"counter"}> Contador</option>
-                      <option value={"solenoid1"}> Solenoide 1</option>
-                      <option value={"solenoid2"}> Solenoide 2</option>
-                      <option value={"solenoid3"}> Solenoide 3</option>
-                    </select>
-                  ) : selectedAlarme.type === "SoilMoisture3DepthLevels" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={""}></option>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"soilMoistureDepthLevel1"}> Humidade 10 cm</option>
-                      <option value={"soilMoistureDepthLevel2"}> Humidade 30 cm</option>
-                      <option value={"soilMoistureDepthLevel3"}> Humidade 70 cm</option>
-                    </select>
-                  ) : selectedAlarme.type === "VibrationAverage" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={""}></option>
-                      <option value={"vibrationAverageX"}> VibrationAverageX</option>
-                      <option value={"vibrationAverageY"}> VibrationAverageY</option>
-                      <option value={"vibrationAverageZ"}> VibrationAverageZ</option>
-                      <option value={"boardVoltage"}> boardVoltage</option>
-                      <option value={"humidity"}> humidade</option>
-                      <option value={"temperature"}> temperatura</option>
-                    </select>
-                  ) : selectedAlarme.type === "Temperature8Point" ? (
-                    <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
-                      <option value={""}></option>
-                      <option value={"temperature1"}> Temperature1</option>
-                      <option value={"temperature2"}> Temperature2</option>
-                      <option value={"temperature3"}> Temperature3</option>
-                      <option value={"temperature4"}> Temperature4</option>
-                      <option value={"temperature5"}> Temperature5</option>
-                      <option value={"temperature6"}> Temperature6</option>
-                      <option value={"temperature7"}> Temperature7</option>
-                      <option value={"temperature8"}> Temperature8</option>
-                      <option value={"boardVoltage"}> Board Voltage</option>
-                    </select>
-                  ) : (
-                    <p></p>
+            </div>
+            <div className="m-2 flex flex-col justify-center h-fit max-w-[24rem] border border-gray-400 bg-gray-50 rounded">
+              <div className="m-2">
+                <p className="font-bold text-3xl text-center">Editar Alarme</p>
+                <p>
+                  Digite um nome para o seu alarme:
+                </p>
+                <input type="text" id="alarmName" className="mx-1 w-100 border border-black rounded p-1 text-lg m-2" placeholder="Nome" value={alarmName} onChange={(event) => setAlarmName(event.target.value)} />
+                <p>
+                  Escolha o campo para o alarme
+                </p>
+                {selectedAlarme.type === "SmartLight" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"batteryVoltage"}> batteryVoltage</option>
+                    <option value={"humidity"}> humidity</option>
+                    <option value={"luminosity"}> luminosity</option>
+                    <option value={"temperature"}> temperature</option>
+                    <option value={"movementCounter"}> movementCounter</option>
+                  </select>
+                ) : selectedAlarme.type === "WaterTankLevel" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"distance"}> distance</option>
+                  </select>
+                ) : selectedAlarme.type === "Hydrometer" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"litreCounter"}> litreCounter</option>
+                  </select>
+                ) : selectedAlarme.type === "EnergyMeter" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"forwardEnergy"}> forwardEnergy</option>
+                    <option value={"reverseEnergy"}> reverseEnergy</option>
+                  </select>
+                ) : selectedAlarme.type === "WeatherStation" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={"emwAtmPres"}> Pressão Atmosférica</option>
+                    <option value={"emwAvgWindSpeed"}> Velocidade do Vento</option>
+                    <option value={"emwGustWindSpeed"}> Velocidade Rajada de Vento</option>
+                    <option value={"emwHumidity"}> Humidade</option>
+                    <option value={"emwLuminosity"}> Luminosidade</option>
+                    <option value={"emwRainLevel"}> Nivel de Chuva</option>
+                    <option value={"emwSolarRadiation"}> Radiação Solar</option>
+                    <option value={"emwTemperature"}> Temperatura</option>
+                    <option value={"emwUv"}> Índice UV</option>
+                  </select>
+                ) : selectedAlarme.type === "Sprinkler" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={""}></option>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"counter"}> Contador</option>
+                    <option value={"solenoid1"}> Solenoide 1</option>
+                    <option value={"solenoid2"}> Solenoide 2</option>
+                    <option value={"solenoid3"}> Solenoide 3</option>
+                  </select>
+                ) : selectedAlarme.type === "SoilMoisture3DepthLevels" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={""}></option>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"soilMoistureDepthLevel1"}> Humidade 10 cm</option>
+                    <option value={"soilMoistureDepthLevel2"}> Humidade 30 cm</option>
+                    <option value={"soilMoistureDepthLevel3"}> Humidade 70 cm</option>
+                  </select>
+                ) : selectedAlarme.type === "VibrationAverage" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={""}></option>
+                    <option value={"vibrationAverageX"}> VibrationAverageX</option>
+                    <option value={"vibrationAverageY"}> VibrationAverageY</option>
+                    <option value={"vibrationAverageZ"}> VibrationAverageZ</option>
+                    <option value={"boardVoltage"}> boardVoltage</option>
+                    <option value={"humidity"}> humidade</option>
+                    <option value={"temperature"}> temperatura</option>
+                  </select>
+                ) : selectedAlarme.type === "Temperature8Point" ? (
+                  <select className="border border-black rounded p-1 text-lg" value={triggerType} onChange={(event) => setTriggerType(event.target.value)}>
+                    <option value={""}></option>
+                    <option value={"temperature1"}> Temperature1</option>
+                    <option value={"temperature2"}> Temperature2</option>
+                    <option value={"temperature3"}> Temperature3</option>
+                    <option value={"temperature4"}> Temperature4</option>
+                    <option value={"temperature5"}> Temperature5</option>
+                    <option value={"temperature6"}> Temperature6</option>
+                    <option value={"temperature7"}> Temperature7</option>
+                    <option value={"temperature8"}> Temperature8</option>
+                    <option value={"boardVoltage"}> Board Voltage</option>
+                  </select>
+                ) : (
+                  <p></p>
+                )}
+                <p className="mt-2">Quando tocar</p>
+                <div className="flex">
+                  {(triggerType === "solenoid1" || triggerType === "solenoid2" || triggerType === "solenoid3") ? (
+                    <div>
+                      <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                        <option value={"true"}> True</option>
+                        <option value={"false"}> False</option>
+                      </select>
+                    </div>) : (
+                    <div>
+                      <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
+                        <option value={"higher"}> Acima de</option>
+                        <option value={"lower"}> Abaixo de</option>
+                      </select>
+                      <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
+                    </div>
                   )}
-                  <p className="mt-2">Quando tocar</p>
-                  <div className="flex">
-                    {(triggerType === "solenoid1" || triggerType === "solenoid2" || triggerType === "solenoid3") ? (
-                      <div>
-                        <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
-                          <option value={"true"}> True</option>
-                          <option value={"false"}> False</option>
-                        </select>
-                      </div>) : (
-                      <div>
-                        <select className="border border-black rounded p-1 text-lg" value={triggerAt} onChange={(event) => setTriggerAt(event.target.value)}>
-                          <option value={"higher"}> Acima de</option>
-                          <option value={"lower"}> Abaixo de</option>
-                        </select>
-                        <input type="text" id="alarmTrigger" className="mx-1 w-32 border border-black rounded p-1 text-lg" placeholder="Valor" required value={trigger} onChange={(event) => setTrigger(event.target.value)} />
-                      </div>
-                    )}
-                  </div>
-                  <p className="mt-2">Ação ao disparar o alarme</p>
-                  <div className="flex">
-                    <select className="border border-black rounded p-1 text-lg" value={actionSensor} onChange={(event) => setActionSensor(event.target.value)}>
-                      <option value={""}></option>
-                      <option value={"sprinklersOn"}> Acionar Irrigadores</option>
-                      <option value={"sprinklersOff"}> Desligar Irrigadores</option>
-                    </select>
-                  </div>
                 </div>
-                <button
-                  onClick={() => { updateAlarm() }}
-                  className="m-2 bg-blue-500 text-white px-3 py-1 rounded h-8 text-lg font-bold hover:bg-blue-700"
-                >Editar alarme</button>
+                <p className="mt-2">Ação ao disparar o alarme</p>
+                <div className="flex">
+                  <select className="border border-black rounded p-1 text-lg" value={actionSensor} onChange={(event) => setActionSensor(event.target.value)}>
+                    <option value={""}></option>
+                    <option value={"sprinklersOn"}> Acionar Irrigadores</option>
+                    <option value={"sprinklersOff"}> Desligar Irrigadores</option>
+                  </select>
+                </div>
               </div>
-            </div>
-            <div className="mt-4 text-5xl text-center font-bold">
-              {alarmError ? (
-                <p className="text-red-500">Insira todos os dados corretamente</p>
-              ) : (
-                <p></p>
-              )}
+              <button
+                onClick={() => { updateAlarm() }}
+                className="m-2 bg-blue-500 text-white px-3 py-1 rounded h-8 text-lg font-bold hover:bg-blue-700"
+              >Editar alarme</button>
             </div>
           </div>
-        ) : historyPopupOpen ? (
-          <div>
-            <div className="m-4">
-              <button
-                onClick={() => setHistoryPopupOpen(false)}
-                className="m-2 bg-red-500 hover:bg-red-700 text-white text-2xl font-bold py-3 px-6 rounded">
-                Voltar
-              </button>
-            </div>
-            <div className="flex-col space-around justify-center items-center p-8">
-              <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {alarmHistory.map((alarme, index) => {
-                  return (
-                    <div
-                      key={index}
-                      className={`animate-fade-in relative h-72 w-60 overflow-hidden rounded-xl bg-white dark:bg-neutral-900 dark:text-neutral-700 shadow-md`}
-                      style={{ boxShadow: '8px 8px 25px rgba(0,0,0,.2)' }}
-                    >
-                      <div className="">
-                        <svg
-                          className="z-10 mx-auto mt-3 fill-current shadow-yellow-300 drop-shadow-2xl"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="90"
-                          height="90"
-                          viewBox="0 0 16 16"
-                        >
-                          <g fill="currentColor" transform="translate(1.000000, 0.000000)">
-                            <path d="M13.654,0.659 C12.342,-0.292 10.604,-0.105 9.664,1.042 C10.615,1.358 11.535,1.827 12.393,2.449 C13.25,3.073 13.983,3.807 14.586,4.622 C15.35,3.347 14.965,1.614 13.654,0.659 Z" />
-                            <path d="M2.644,2.427 C3.502,1.811 4.422,1.347 5.374,1.032 C4.433,-0.104 2.694,-0.288 1.383,0.654 C0.072,1.6 -0.314,3.316 0.451,4.579 C1.055,3.773 1.788,3.045 2.644,2.427 Z" />
-                            <path d="M13.924,8.633 C13.924,8.435 13.912,8.24 13.896,8.047 C13.624,4.907 11.198,2.401 8.131,2.081 L8.131,2.081 C7.995,2.065 7.858,2.064 7.719,2.059 C7.637,2.055 7.555,2.045 7.471,2.045 L7.469,2.045 L7.467,2.045 C3.899,2.045 1.008,4.994 1.008,8.633 C1.008,8.662 1.012,8.692 1.013,8.721 C1.035,10.574 1.815,12.235 3.041,13.415 C2.633,13.627 2.348,14.056 2.348,14.558 C2.348,15.267 2.912,15.842 3.608,15.842 C4.274,15.842 4.812,15.315 4.858,14.648 C5.547,14.959 6.298,15.155 7.089,15.202 C7.215,15.21 7.34,15.222 7.467,15.222 C7.612,15.222 7.752,15.209 7.897,15.2 C8.698,15.146 9.458,14.939 10.153,14.614 C10.182,15.298 10.729,15.843 11.406,15.843 C12.102,15.843 12.665,15.268 12.665,14.559 C12.665,14.036 12.36,13.589 11.922,13.388 C13.152,12.19 13.924,10.506 13.924,8.633 Z M7.527,13.314 C4.964,13.314 2.88,11.198 2.88,8.598 C2.88,5.998 4.964,3.884 7.527,3.884 C10.089,3.884 12.174,5.998 12.174,8.598 C12.174,11.198 10.089,13.314 7.527,13.314 Z" />
-                            <rect x="7" y="5" width="1" height="4" />
-                            <rect x="7" y="8" width="3" height="1" />
-                          </g>
-                        </svg>
-                      </div>
-                      <div className="absolute left-3">
-                        <h1 className="text-sm font-semibold">
-                          <p className={`mt-3 mr-2 font-bold text-black }`}>
-                            {alarme.local}
-                          </p>
-                          <p className={`mr-2 font-bold text-black}`}>
-                            {alarme.type}
-                          </p>
-                          <p className={`mr-2 font-bold text-black}`}>
-                            {alarme.triggerType}
-                          </p>
-                          <p className={`mr-2 font-medium text-black}`}>
-                            <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
-                              alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
-                            {alarme.triggerAt === "higher" ? alarme.trigger :
-                              alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
-                              alarme.triggerType === "boardVoltage" ? "V" :
-                                alarme.triggerType === "batteryVoltage" ? "V" :
-                                  alarme.triggerType === "humidity" ? "%" :
-                                    alarme.triggerType === "luminosity" ? " lux" :
-                                      alarme.triggerType === "temperature" ? "°C" :
-                                        alarme.triggerType === "movement" ? " movimentos" :
-                                          alarme.triggerType === "distance" ? " m" :
+          <div className="mt-4 text-5xl text-center font-bold">
+            {alarmError ? (
+              <p className="text-red-500">Insira todos os dados corretamente</p>
+            ) : (
+              <p></p>
+            )}
+          </div>
+        </div>
+      ) : historyPopupOpen ? (
+        <div>
+          <div className="m-4">
+            <button
+              onClick={() => setHistoryPopupOpen(false)}
+              className="m-2 bg-red-500 hover:bg-red-700 text-white text-2xl font-bold py-3 px-6 rounded">
+              Voltar
+            </button>
+          </div>
+          <div className="flex-col space-around justify-center items-center p-8">
+            <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {alarmHistory.map((alarme, index) => {
+                return (
+                  <div
+                    key={index}
+                    className={`animate-fade-in relative h-72 w-60 overflow-hidden rounded-xl bg-white dark:bg-neutral-900 dark:text-neutral-700 shadow-md`}
+                    style={{ boxShadow: '8px 8px 25px rgba(0,0,0,.2)' }}
+                  >
+                    <div className="">
+                      <svg
+                        className="z-10 mx-auto mt-3 fill-current shadow-yellow-300 drop-shadow-2xl"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="90"
+                        height="90"
+                        viewBox="0 0 16 16"
+                      >
+                        <g fill="currentColor" transform="translate(1.000000, 0.000000)">
+                          <path d="M13.654,0.659 C12.342,-0.292 10.604,-0.105 9.664,1.042 C10.615,1.358 11.535,1.827 12.393,2.449 C13.25,3.073 13.983,3.807 14.586,4.622 C15.35,3.347 14.965,1.614 13.654,0.659 Z" />
+                          <path d="M2.644,2.427 C3.502,1.811 4.422,1.347 5.374,1.032 C4.433,-0.104 2.694,-0.288 1.383,0.654 C0.072,1.6 -0.314,3.316 0.451,4.579 C1.055,3.773 1.788,3.045 2.644,2.427 Z" />
+                          <path d="M13.924,8.633 C13.924,8.435 13.912,8.24 13.896,8.047 C13.624,4.907 11.198,2.401 8.131,2.081 L8.131,2.081 C7.995,2.065 7.858,2.064 7.719,2.059 C7.637,2.055 7.555,2.045 7.471,2.045 L7.469,2.045 L7.467,2.045 C3.899,2.045 1.008,4.994 1.008,8.633 C1.008,8.662 1.012,8.692 1.013,8.721 C1.035,10.574 1.815,12.235 3.041,13.415 C2.633,13.627 2.348,14.056 2.348,14.558 C2.348,15.267 2.912,15.842 3.608,15.842 C4.274,15.842 4.812,15.315 4.858,14.648 C5.547,14.959 6.298,15.155 7.089,15.202 C7.215,15.21 7.34,15.222 7.467,15.222 C7.612,15.222 7.752,15.209 7.897,15.2 C8.698,15.146 9.458,14.939 10.153,14.614 C10.182,15.298 10.729,15.843 11.406,15.843 C12.102,15.843 12.665,15.268 12.665,14.559 C12.665,14.036 12.36,13.589 11.922,13.388 C13.152,12.19 13.924,10.506 13.924,8.633 Z M7.527,13.314 C4.964,13.314 2.88,11.198 2.88,8.598 C2.88,5.998 4.964,3.884 7.527,3.884 C10.089,3.884 12.174,5.998 12.174,8.598 C12.174,11.198 10.089,13.314 7.527,13.314 Z" />
+                          <rect x="7" y="5" width="1" height="4" />
+                          <rect x="7" y="8" width="3" height="1" />
+                        </g>
+                      </svg>
+                    </div>
+                    <div className="absolute left-3">
+                      <h1 className="text-sm font-semibold">
+                        <p className={`mt-3 mr-2 font-bold text-black }`}>
+                          {alarme.local}
+                        </p>
+                        <p className={`mr-2 font-bold text-black}`}>
+                          {alarme.type}
+                        </p>
+                        <p className={`mr-2 font-bold text-black}`}>
+                          {alarme.triggerType}
+                        </p>
+                        <p className={`mr-2 font-medium text-black}`}>
+                          <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
+                            alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " Em "}
+                          {alarme.triggerAt === "higher" ? alarme.trigger :
+                            alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
+                            alarme.triggerType === "boardVoltage" ? "V" :
+                              alarme.triggerType === "batteryVoltage" ? "V" :
+                                alarme.triggerType === "humidity" ? "%" :
+                                  alarme.triggerType === "luminosity" ? " lux" :
+                                    alarme.triggerType === "temperature" ? "°C" :
+                                      alarme.triggerType === "movementCounter" ? " movimentos" :
+                                        alarme.triggerType === "distance" ? " m" :
+                                          alarme.triggerType === "litreCounter" ? " contagem de litros" :
                                             alarme.triggerType === "counter" ? " contagem" :
                                               alarme.triggerType === "forwardEnergy" ? " kWh" :
                                                 alarme.triggerType === "reverseEnergy" ? " kWh" :
@@ -901,197 +906,23 @@ const Alarmes = () => {
                                                                                           alarme.triggerType === "temperature6" ? "°C" :
                                                                                             alarme.triggerType === "temperature7" ? "°C" :
                                                                                               alarme.triggerType === "temperature8" ? "°C" : ""
-                            }
-                          </p>
-                          <p className={`mr-2 font-medium text-black`}>
-                            {
-                              alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
-                                <div></div>
-                              ) : (
-                                <>
-                                  <strong>Valor durante:</strong> {String(alarme.currentValue)}{
-                                    alarme.triggerType === "boardVoltage" ? "V" :
-                                      alarme.triggerType === "batteryVoltage" ? "V" :
-                                        alarme.triggerType === "humidity" ? "%" :
-                                          alarme.triggerType === "luminosity" ? " lux" :
-                                            alarme.triggerType === "temperature" ? "°C" :
-                                              alarme.triggerType === "movement" ? "" :
-                                                alarme.triggerType === "distance" ? " m" :
-                                                  alarme.triggerType === "counter" ? "" :
-                                                    alarme.triggerType === "forwardEnergy" ? " kWh" :
-                                                      alarme.triggerType === "reverseEnergy" ? " kWh" :
-                                                        alarme.triggerType === "emwAtmPres" ? " atm" :
-                                                          alarme.triggerType === "windSpeed" ? " m/s" :
-                                                            alarme.triggerType === "windGustSpeed" ? " m/s" :
-                                                              alarme.triggerType === "rainLevel" ? " mm" :
-                                                                alarme.triggerType === "solarRadiation" ? " W/m²" :
-                                                                  alarme.triggerType === "uvIndex" ? "" :
-                                                                    alarme.triggerType === "vibrationAverageX" ? "G" :
-                                                                      alarme.triggerType === "vibrationAverageY" ? "G" :
-                                                                        alarme.triggerType === "vibrationAverageZ" ? "G" :
-                                                                          alarme.triggerType === "temperature1" ? "°C" :
-                                                                            alarme.triggerType === "temperature2" ? "°C" :
-                                                                              alarme.triggerType === "temperature3" ? "°C" :
-                                                                                alarme.triggerType === "temperature4" ? "°C" :
-                                                                                  alarme.triggerType === "temperature5" ? "°C" :
-                                                                                    alarme.triggerType === "temperature6" ? "°C" :
-                                                                                      alarme.triggerType === "temperature7" ? "°C" :
-                                                                                        alarme.triggerType === "temperature8" ? "°C" : ""
-                                  }
-                                </>
-                              )
-                            }
-                          </p>
-                          <p className={`mr-2 font-medium text-black`}>
-                            <strong>Tocou em:</strong> {alarme.lastPlayed.toLocaleDateString("pt-br", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric"
-                            })} às {alarme.lastPlayed.toLocaleTimeString("pt-br", {
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
-                          </p>
-                          <p className={`mr-2 font-medium text-black`}>
-                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : "Sem ação definida"}
-                          </p>
-                        </h1>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-col space-around justify-center items-center">
-            <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {alarmes.map((alarme, index) => {
-                const isTriggered = alarme.triggerAt === "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt === "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
-                  alarme.triggerAt === "true" ? alarme.currentValue === "true" : alarme.triggerAt === "false" ? alarme.currentValue === "false" :
-                    alarme.triggerAt === "" ? alarme.currentValue === "Available" : alarme.currentValue !== "Available";
-
-                return (
-                  <div
-                    key={index}
-                    className={`animate-fade-in relative h-100 p-4 w-64 overflow-hidden rounded-xl ${isTriggered ? "bg-red-500 text-red-100" : "bg-white dark:bg-neutral-900 dark:text-neutral-700"} shadow-md`}
-                    style={{ boxShadow: '8px 8px 25px rgba(0,0,0,.2)' }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <button
-                        onClick={() => deleteAlarme(alarme)}
-                        className={`font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "ext-white" : "text-black"} hover:bg-opacity-80 transition`}
-                      >
-                        X
-                      </button>
-                      <p
-                        className={'text-base font-bold text-center px-4 py-2 truncate ${isTriggered ? "text-white" : "text-gray-700 "}'}
-                        style={{
-                          maxWidth: "200px",
-                          overflow: "hidden",
-                          whiteSpace: "nowrap",
-                          textOverflow: "ellipsis",
-                        }}
-                        title={alarme.alarmName}
-                      >
-                        {alarme.alarmName || "Sem nome"}
-                      </p>
-
-                      {alarme.triggerType !== 'status' ? (
-                        <button
-                          onClick={() => openEditPopup(alarme)}
-                          className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
-                        >
-                          Editar
-                        </button>
-                      ) : <div className={`text-sm font-bold flex items-center justify-center w-10 h-10 `}></div>
-                      }
-                    </div>
-                    <div className="">
-                      <svg
-                        className="z-10 mx-auto mt-2 fill-current shadow-yellow-300 drop-shadow-2xl"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="90"
-                        height="90"
-                        viewBox="0 0 16 16"
-                      >
-                        <g fill="currentColor" transform="translate(1.000000, 0.000000)">
-                          <path d="M13.654,0.659 C12.342,-0.292 10.604,-0.105 9.664,1.042 C10.615,1.358 11.535,1.827 12.393,2.449 C13.25,3.073 13.983,3.807 14.586,4.622 C15.35,3.347 14.965,1.614 13.654,0.659 Z" />
-                          <path d="M2.644,2.427 C3.502,1.811 4.422,1.347 5.374,1.032 C4.433,-0.104 2.694,-0.288 1.383,0.654 C0.072,1.6 -0.314,3.316 0.451,4.579 C1.055,3.773 1.788,3.045 2.644,2.427 Z" />
-                          <path d="M13.924,8.633 C13.924,8.435 13.912,8.24 13.896,8.047 C13.624,4.907 11.198,2.401 8.131,2.081 L8.131,2.081 C7.995,2.065 7.858,2.064 7.719,2.059 C7.637,2.055 7.555,2.045 7.471,2.045 L7.469,2.045 L7.467,2.045 C3.899,2.045 1.008,4.994 1.008,8.633 C1.008,8.662 1.012,8.692 1.013,8.721 C1.035,10.574 1.815,12.235 3.041,13.415 C2.633,13.627 2.348,14.056 2.348,14.558 C2.348,15.267 2.912,15.842 3.608,15.842 C4.274,15.842 4.812,15.315 4.858,14.648 C5.547,14.959 6.298,15.155 7.089,15.202 C7.215,15.21 7.34,15.222 7.467,15.222 C7.612,15.222 7.752,15.209 7.897,15.2 C8.698,15.146 9.458,14.939 10.153,14.614 C10.182,15.298 10.729,15.843 11.406,15.843 C12.102,15.843 12.665,15.268 12.665,14.559 C12.665,14.036 12.36,13.589 11.922,13.388 C13.152,12.19 13.924,10.506 13.924,8.633 Z M7.527,13.314 C4.964,13.314 2.88,11.198 2.88,8.598 C2.88,5.998 4.964,3.884 7.527,3.884 C10.089,3.884 12.174,5.998 12.174,8.598 C12.174,11.198 10.089,13.314 7.527,13.314 Z" />
-                          <rect x="7" y="5" width="1" height="4" />
-                          <rect x="7" y="8" width="3" height="1" />
-                        </g>
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <h1 className="text-sm font-semibold">
-                        <p className={`mt-3 mr-2 font-bold ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          {alarme.local}
-                        </p>
-                        <p className={`mr-2 font-bold ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          {alarme.type}
-                        </p>
-                        <p className={`mr-2 font-bold ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          {alarme.triggerType}
-                        </p>
-                        <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                          <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
-                            alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " "}
-                          {alarme.triggerAt === "higher" ? alarme.trigger :
-                            alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
-                            alarme.triggerType === "boardVoltage" ? "V" :
-                              alarme.triggerType === "batteryVoltage" ? "V" :
-                                alarme.triggerType === "humidity" ? "%" :
-                                  alarme.triggerType === "luminosity" ? " lux" :
-                                    alarme.triggerType === "temperature" ? "°C" :
-                                      alarme.triggerType === "movement" ? " movimentos" :
-                                        alarme.triggerType === "distance" ? " m" :
-                                          alarme.triggerType === "counter" ? " contagem" :
-                                            alarme.triggerType === "forwardEnergy" ? " kWh" :
-                                              alarme.triggerType === "reverseEnergy" ? " kWh" :
-                                                alarme.triggerType === "emwAtmPres" ? " atm" :
-                                                  alarme.triggerType === "emwAvgWindSpeed" ? " m/s" :
-                                                    alarme.triggerType === "emwGustWindSpeed" ? " m/s" :
-                                                      alarme.triggerType === "emwRainLevel" ? " mm" :
-                                                        alarme.triggerType === "emwSolarRadiation" ? " W/m²" :
-                                                          alarme.triggerType === "emwUv" ? " UV" :
-                                                            alarme.triggerType === "solenoid1" ? "" :
-                                                              alarme.triggerType === "solenoid2" ? "" :
-                                                                alarme.triggerType === "solenoid3" ? "" :
-                                                                  alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
-                                                                    alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
-                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "status" ? "Ao liberar carregador" :
-                                                                          alarme.triggerType === "vibrationAverageX" ? " G" :
-                                                                            alarme.triggerType === "vibrationAverageY" ? " G" :
-                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" :
-                                                                                alarme.triggerType === "temperature1" ? "°C" :
-                                                                                  alarme.triggerType === "temperature2" ? "°C" :
-                                                                                    alarme.triggerType === "temperature3" ? "°C" :
-                                                                                      alarme.triggerType === "temperature4" ? "°C" :
-                                                                                        alarme.triggerType === "temperature5" ? "°C" :
-                                                                                          alarme.triggerType === "temperature6" ? "°C" :
-                                                                                            alarme.triggerType === "temperature7" ? "°C" :
-                                                                                              alarme.triggerType === "temperature8" ? "°C" : ""
                           }
                         </p>
-                        <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
+                        <p className={`mr-2 font-medium text-black`}>
                           {
                             alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
-                              <>
-                                <strong>Valor atual:</strong> {alarme.currentValue}
-                              </>
+                              <div></div>
                             ) : (
                               <>
-                                <strong>Valor atual:</strong> {String(alarme.currentValue)}{
+                                <strong>Valor durante:</strong> {String(alarme.currentValue)}{
                                   alarme.triggerType === "boardVoltage" ? "V" :
                                     alarme.triggerType === "batteryVoltage" ? "V" :
                                       alarme.triggerType === "humidity" ? "%" :
                                         alarme.triggerType === "luminosity" ? " lux" :
                                           alarme.triggerType === "temperature" ? "°C" :
-                                            alarme.triggerType === "movement" ? "" :
+                                            alarme.triggerType === "movementCounter" ? "" :
                                               alarme.triggerType === "distance" ? " m" :
+                                                alarme.triggerType === "litreCounter" ? "" :
                                                 alarme.triggerType === "counter" ? "" :
                                                   alarme.triggerType === "forwardEnergy" ? " kWh" :
                                                     alarme.triggerType === "reverseEnergy" ? " kWh" :
@@ -1101,46 +932,223 @@ const Alarmes = () => {
                                                             alarme.triggerType === "rainLevel" ? " mm" :
                                                               alarme.triggerType === "solarRadiation" ? " W/m²" :
                                                                 alarme.triggerType === "uvIndex" ? "" :
-                                                                  alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
-                                                                    alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
-                                                                      alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
-                                                                        alarme.triggerType === "status" ? "" :
-                                                                          alarme.triggerType === "vibrationAverageX" ? " G" :
-                                                                            alarme.triggerType === "vibrationAverageY" ? " G" :
-                                                                              alarme.triggerType === "vibrationAverageZ" ? " G" :
-                                                                                alarme.triggerType === "temperature1" ? "°C" :
-                                                                                  alarme.triggerType === "temperature2" ? "°C" :
-                                                                                    alarme.triggerType === "temperature3" ? "°C" :
-                                                                                      alarme.triggerType === "temperature4" ? "°C" :
-                                                                                        alarme.triggerType === "temperature5" ? "°C" :
-                                                                                          alarme.triggerType === "temperature6" ? "°C" :
-                                                                                            alarme.triggerType === "temperature7" ? "°C" :
-                                                                                              alarme.triggerType === "temperature8" ? "°C" : ""
+                                                                  alarme.triggerType === "vibrationAverageX" ? "G" :
+                                                                    alarme.triggerType === "vibrationAverageY" ? "G" :
+                                                                      alarme.triggerType === "vibrationAverageZ" ? "G" :
+                                                                        alarme.triggerType === "temperature1" ? "°C" :
+                                                                          alarme.triggerType === "temperature2" ? "°C" :
+                                                                            alarme.triggerType === "temperature3" ? "°C" :
+                                                                              alarme.triggerType === "temperature4" ? "°C" :
+                                                                                alarme.triggerType === "temperature5" ? "°C" :
+                                                                                  alarme.triggerType === "temperature6" ? "°C" :
+                                                                                    alarme.triggerType === "temperature7" ? "°C" :
+                                                                                      alarme.triggerType === "temperature8" ? "°C" : ""
                                 }
                               </>
                             )
                           }
                         </p>
-                        {alarme.triggerType === "status" ? null : (
-                          <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
-                            <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
-                          </p>
-                        )}
-                        <button
-                          onClick={() => getAlarmHistory(alarme)}
-                          className={`rounded-lg text-lg px-2 ${isTriggered ? "text-red-500 bg-white hover:bg-gray-300" : "text-white bg-blue-500 hover:bg-blue-700"} font-bold mt-1`}
-                        >
-                          Histórico
-                        </button>
+                        <p className={`mr-2 font-medium text-black`}>
+                          <strong>Tocou em:</strong> {alarme.lastPlayed.toLocaleDateString("pt-br", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric"
+                          })} às {alarme.lastPlayed.toLocaleTimeString("pt-br", {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </p>
+                        <p className={`mr-2 font-medium text-black`}>
+                          <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : "Sem ação definida"}
+                        </p>
                       </h1>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
-          </div>)}
-      </div>
-    
+          </div>
+        </div>
+      ) : (
+        <div className="flex-col space-around justify-center items-center">
+          <div className="grid w-full gap-10 mx-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {alarmes.map((alarme, index) => {
+              const isTriggered = alarme.triggerAt === "higher" ? Number(alarme.currentValue) > Number(alarme.trigger) : alarme.triggerAt === "lower" ? Number(alarme.currentValue) < Number(alarme.trigger) :
+                alarme.triggerAt === "true" ? alarme.currentValue === "true" : alarme.triggerAt === "false" ? alarme.currentValue === "false" :
+                  alarme.triggerAt === "" ? alarme.currentValue === "Available" : alarme.currentValue !== "Available";
+
+              return (
+                <div
+                  key={index}
+                  className={`animate-fade-in relative h-100 p-4 w-64 overflow-hidden rounded-xl ${isTriggered ? "bg-red-500 text-red-100" : "bg-white dark:bg-neutral-900 dark:text-neutral-700"} shadow-md`}
+                  style={{ boxShadow: '8px 8px 25px rgba(0,0,0,.2)' }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={() => deleteAlarme(alarme)}
+                      className={`font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "ext-white" : "text-black"} hover:bg-opacity-80 transition`}
+                    >
+                      X
+                    </button>
+                    <p
+                      className={'text-base font-bold text-center px-4 py-2 truncate ${isTriggered ? "text-white" : "text-gray-700 "}'}
+                      style={{
+                        maxWidth: "200px",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      }}
+                      title={alarme.alarmName}
+                    >
+                      {alarme.alarmName || "Sem nome"}
+                    </p>
+
+                    {alarme.triggerType !== 'status' ? (
+                      <button
+                        onClick={() => openEditPopup(alarme)}
+                        className={`text-sm font-bold flex items-center justify-center w-10 h-10 ${isTriggered ? "text-white" : "text-black"} hover:bg-opacity-80 transition`}
+                      >
+                        Editar
+                      </button>
+                    ) : <div className={`text-sm font-bold flex items-center justify-center w-10 h-10 `}></div>
+                    }
+                  </div>
+                  <div className="">
+                    <svg
+                      className="z-10 mx-auto mt-2 fill-current shadow-yellow-300 drop-shadow-2xl"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="90"
+                      height="90"
+                      viewBox="0 0 16 16"
+                    >
+                      <g fill="currentColor" transform="translate(1.000000, 0.000000)">
+                        <path d="M13.654,0.659 C12.342,-0.292 10.604,-0.105 9.664,1.042 C10.615,1.358 11.535,1.827 12.393,2.449 C13.25,3.073 13.983,3.807 14.586,4.622 C15.35,3.347 14.965,1.614 13.654,0.659 Z" />
+                        <path d="M2.644,2.427 C3.502,1.811 4.422,1.347 5.374,1.032 C4.433,-0.104 2.694,-0.288 1.383,0.654 C0.072,1.6 -0.314,3.316 0.451,4.579 C1.055,3.773 1.788,3.045 2.644,2.427 Z" />
+                        <path d="M13.924,8.633 C13.924,8.435 13.912,8.24 13.896,8.047 C13.624,4.907 11.198,2.401 8.131,2.081 L8.131,2.081 C7.995,2.065 7.858,2.064 7.719,2.059 C7.637,2.055 7.555,2.045 7.471,2.045 L7.469,2.045 L7.467,2.045 C3.899,2.045 1.008,4.994 1.008,8.633 C1.008,8.662 1.012,8.692 1.013,8.721 C1.035,10.574 1.815,12.235 3.041,13.415 C2.633,13.627 2.348,14.056 2.348,14.558 C2.348,15.267 2.912,15.842 3.608,15.842 C4.274,15.842 4.812,15.315 4.858,14.648 C5.547,14.959 6.298,15.155 7.089,15.202 C7.215,15.21 7.34,15.222 7.467,15.222 C7.612,15.222 7.752,15.209 7.897,15.2 C8.698,15.146 9.458,14.939 10.153,14.614 C10.182,15.298 10.729,15.843 11.406,15.843 C12.102,15.843 12.665,15.268 12.665,14.559 C12.665,14.036 12.36,13.589 11.922,13.388 C13.152,12.19 13.924,10.506 13.924,8.633 Z M7.527,13.314 C4.964,13.314 2.88,11.198 2.88,8.598 C2.88,5.998 4.964,3.884 7.527,3.884 C10.089,3.884 12.174,5.998 12.174,8.598 C12.174,11.198 10.089,13.314 7.527,13.314 Z" />
+                        <rect x="7" y="5" width="1" height="4" />
+                        <rect x="7" y="8" width="3" height="1" />
+                      </g>
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h1 className="text-sm font-semibold">
+                      <p className={`mt-3 mr-2 font-bold ${isTriggered ? "text-red-100" : "text-black"}`}>
+                        {alarme.local}
+                      </p>
+                      <p className={`mr-2 font-bold ${isTriggered ? "text-red-100" : "text-black"}`}>
+                        {alarme.type}
+                      </p>
+                      <p className={`mr-2 font-bold ${isTriggered ? "text-red-100" : "text-black"}`}>
+                        {alarme.triggerType}
+                      </p>
+                      <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
+                        <strong>Tocar:</strong> {alarme.triggerAt === "higher" ? "Acima de " :
+                          alarme.triggerAt === "lower" ? "Abaixo de " : alarme.triggerAt === "true" ? "Em " : " "}
+                        {alarme.triggerAt === "higher" ? alarme.trigger :
+                          alarme.triggerAt === "lower" ? alarme.trigger : alarme.triggerAt === "true" ? alarme.triggerAt : alarme.triggerAt}{
+                          alarme.triggerType === "boardVoltage" ? "V" :
+                            alarme.triggerType === "batteryVoltage" ? "V" :
+                              alarme.triggerType === "humidity" ? "%" :
+                                alarme.triggerType === "luminosity" ? " lux" :
+                                  alarme.triggerType === "temperature" ? "°C" :
+                                    alarme.triggerType === "movementCounter" ? " movimentos" :
+                                      alarme.triggerType === "distance" ? " m" :
+                                        alarme.triggerType === "counter" ? " contagem" :
+                                        alarme.triggerType === "litreCounter" ? " contagem de litros" :
+                                          alarme.triggerType === "forwardEnergy" ? " kWh" :
+                                            alarme.triggerType === "reverseEnergy" ? " kWh" :
+                                              alarme.triggerType === "emwAtmPres" ? " atm" :
+                                                alarme.triggerType === "emwAvgWindSpeed" ? " m/s" :
+                                                  alarme.triggerType === "emwGustWindSpeed" ? " m/s" :
+                                                    alarme.triggerType === "emwRainLevel" ? " mm" :
+                                                      alarme.triggerType === "emwSolarRadiation" ? " W/m²" :
+                                                        alarme.triggerType === "emwUv" ? " UV" :
+                                                          alarme.triggerType === "solenoid1" ? "" :
+                                                            alarme.triggerType === "solenoid2" ? "" :
+                                                              alarme.triggerType === "solenoid3" ? "" :
+                                                                alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                  alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
+                                                                      alarme.triggerType === "status" ? "Ao liberar carregador" :
+                                                                        alarme.triggerType === "vibrationAverageX" ? " G" :
+                                                                          alarme.triggerType === "vibrationAverageY" ? " G" :
+                                                                            alarme.triggerType === "vibrationAverageZ" ? " G" :
+                                                                              alarme.triggerType === "temperature1" ? "°C" :
+                                                                                alarme.triggerType === "temperature2" ? "°C" :
+                                                                                  alarme.triggerType === "temperature3" ? "°C" :
+                                                                                    alarme.triggerType === "temperature4" ? "°C" :
+                                                                                      alarme.triggerType === "temperature5" ? "°C" :
+                                                                                        alarme.triggerType === "temperature6" ? "°C" :
+                                                                                          alarme.triggerType === "temperature7" ? "°C" :
+                                                                                            alarme.triggerType === "temperature8" ? "°C" : ""
+                        }
+                      </p>
+                      <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
+                        {
+                          alarme.triggerAt === "true" || alarme.triggerAt === "false" ? (
+                            <>
+                              <strong>Valor atual:</strong> {alarme.currentValue}
+                            </>
+                          ) : (
+                            <>
+                              <strong>Valor atual:</strong> {String(alarme.currentValue)}{
+                                alarme.triggerType === "boardVoltage" ? "V" :
+                                  alarme.triggerType === "batteryVoltage" ? "V" :
+                                    alarme.triggerType === "humidity" ? "%" :
+                                      alarme.triggerType === "luminosity" ? " lux" :
+                                        alarme.triggerType === "temperature" ? "°C" :
+                                          alarme.triggerType === "movementCounter" ? "" :
+                                            alarme.triggerType === "distance" ? " m" :
+                                              alarme.triggerType === "counter" ? "" :
+                                              alarme.triggerType === "litreCounter" ? "" :
+                                                alarme.triggerType === "forwardEnergy" ? " kWh" :
+                                                  alarme.triggerType === "reverseEnergy" ? " kWh" :
+                                                    alarme.triggerType === "emwAtmPres" ? " atm" :
+                                                      alarme.triggerType === "windSpeed" ? " m/s" :
+                                                        alarme.triggerType === "windGustSpeed" ? " m/s" :
+                                                          alarme.triggerType === "rainLevel" ? " mm" :
+                                                            alarme.triggerType === "solarRadiation" ? " W/m²" :
+                                                              alarme.triggerType === "uvIndex" ? "" :
+                                                                alarme.triggerType === "soilMoistureDepthLevel1" ? "%" :
+                                                                  alarme.triggerType === "soilMoistureDepthLevel2" ? "%" :
+                                                                    alarme.triggerType === "soilMoistureDepthLevel3" ? "%" :
+                                                                      alarme.triggerType === "status" ? "" :
+                                                                        alarme.triggerType === "vibrationAverageX" ? " G" :
+                                                                          alarme.triggerType === "vibrationAverageY" ? " G" :
+                                                                            alarme.triggerType === "vibrationAverageZ" ? " G" :
+                                                                              alarme.triggerType === "temperature1" ? "°C" :
+                                                                                alarme.triggerType === "temperature2" ? "°C" :
+                                                                                  alarme.triggerType === "temperature3" ? "°C" :
+                                                                                    alarme.triggerType === "temperature4" ? "°C" :
+                                                                                      alarme.triggerType === "temperature5" ? "°C" :
+                                                                                        alarme.triggerType === "temperature6" ? "°C" :
+                                                                                          alarme.triggerType === "temperature7" ? "°C" :
+                                                                                            alarme.triggerType === "temperature8" ? "°C" : ""
+                              }
+                            </>
+                          )
+                        }
+                      </p>
+                      {alarme.triggerType === "status" ? null : (
+                        <p className={`mr-2 font-medium ${isTriggered ? "text-red-100" : "text-black"}`}>
+                          <strong>Ação ao disparar o alarme:</strong> {alarme.actionSensor ? String(alarme.actionSensor) : " Sem ação definida"}
+                        </p>
+                      )}
+                      <button
+                        onClick={() => getAlarmHistory(alarme)}
+                        className={`rounded-lg text-lg px-2 ${isTriggered ? "text-red-500 bg-white hover:bg-gray-300" : "text-white bg-blue-500 hover:bg-blue-700"} font-bold mt-1`}
+                      >
+                        Histórico
+                      </button>
+                    </h1>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>)}
+    </div>
+
   );
 };
 
