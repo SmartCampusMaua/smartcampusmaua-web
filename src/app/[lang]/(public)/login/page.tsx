@@ -1,9 +1,9 @@
 import Image from "next/image";
-import { Button } from "../../ui/button";
+import { Button } from "../../../ui/button";
 import { redirect } from "next/navigation";
 import { signIn, auth, providerMap } from "@/auth";
 import { AuthError } from "next-auth";
-import { noto_serif } from "../../ui/fonts";
+import { noto_serif } from "../../../ui/fonts";
 
 type SearchParams = Promise<{ callbackUrl: string | undefined }>;
 

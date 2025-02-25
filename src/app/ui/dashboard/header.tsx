@@ -21,7 +21,8 @@ export default function Header({ toggleSidebar }: { toggleSidebar: () => void })
 
   const handleLogout = async () => {
     setLoading(true);
-    await signOut({ callbackUrl: '/login' }); 
+    // await signOut({ callbackUrl: '/login' }); 
+    await signOut(); 
     setLoading(false);
   };
 

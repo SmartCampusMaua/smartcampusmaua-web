@@ -26,4 +26,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: smartcampusmaua/smartcampusmaua-web:0.3.36
+          tags: smartcampusmaua/smartcampusmaua-web:0.3.37
