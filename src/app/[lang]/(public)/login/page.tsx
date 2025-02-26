@@ -59,7 +59,7 @@ export default async function Page({
                   "use server";
                   try {
                     await signIn(provider.id, {
-                      redirectTo: sP?.callbackUrl ?? "",
+                      redirectTo: sP?.callbackUrl ?? "/dashboard",
                     });
                   } catch (error) {
                     if (error instanceof AuthError) {
