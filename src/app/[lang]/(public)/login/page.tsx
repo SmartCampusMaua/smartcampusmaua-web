@@ -5,13 +5,11 @@ import { signIn, auth, providerMap } from "@/auth";
 import { AuthError } from "next-auth";
 import { noto_serif } from "../../../ui/fonts";
 
-type SearchParams = Promise<{ callbackUrl: string | undefined }>;
-
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<{ callbackUrl: string | undefined }>;
 }) {
 
 
@@ -59,7 +57,8 @@ export default async function Page({
                   "use server";
                   try {
                     await signIn(provider.id, {
-                      redirectTo: sP?.callbackUrl ?? "/",
+                      // redirectTo: sP?.callbackUrl ?? "/dashboard",
+                      redirectTo:  "/dashboard",
                     });
                   } catch (error) {
                     if (error instanceof AuthError) {
