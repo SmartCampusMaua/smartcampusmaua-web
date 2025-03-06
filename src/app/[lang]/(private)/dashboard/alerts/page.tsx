@@ -3,7 +3,7 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { GenericSensor, AlarmeValue, AlarmeHistory } from '@/lib/dataTypes';
-import { fetchEvseStatusNotification, fetchSensorByDEVEUI, fetchSensors } from '@/lib/timeseries';
+import { fetchEvseStatusNotificationByDeviceId, fetchSensors } from '@/lib/timeseries';
 import { formatDistanceToNow } from 'date-fns';
 
 import { supabase } from '@/lib/supabaseClient';
@@ -433,7 +433,7 @@ const Alarmes = () => {
 
             // Apenas a função assíncrona `fetchEvseStatusNotification`
             if (alarmData.triggerType === 'status') {
-              currentValue = await fetchEvseStatusNotification(alarmData.deveui);
+              currentValue = await fetchEvseStatusNotificationByDeviceId(alarmData.deveui);
             }
 
             return new AlarmeValue(

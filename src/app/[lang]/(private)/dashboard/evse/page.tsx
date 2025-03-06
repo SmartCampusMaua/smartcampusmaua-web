@@ -1,78 +1,109 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import mqtt from "mqtt";
+// import mqtt from "mqtt";
 import Head from "next/head";
 import { GenericSensor } from "@/lib/dataTypes";
 import { supabase } from "@/lib/supabaseClient";
-import { fetchEvseStatusNotification } from "@/lib/timeseries";
+import { fetchEvseSensors, fetchEvseStatusNotificationByDeviceId } from "@/lib/timeseries";
+// import { fetchEvseStatusNotificationByDeviceId } from  "@/lib/timeseries";
 import { User } from '@/app/lib/userSession';
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 
-export default function Home() {
+export default function EvsePage() {
   const [sensors, setSensors] = useState<GenericSensor[]>([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [interval, setInterval] = useState(30); // Estado para armazenar o intervalo de dias na exportação (.csv) de um sensor
   const [exportInfoPopupOpen, setExportInfoPopupOpen] = useState(false);
   const [selectedSensor, setSelectedSensor] = useState<GenericSensor>();
+  const [sensorStatuses, setSensorStatuses] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  const broker = "wss://mqtt.maua.br:8084";
-  const options = {
-    username: "PUBLIC",
-    password: "public",
-  };
+
+  // const broker = "wss://mqtt.maua.br:8084";
+  // const options = {
+  //   username: "PUBLIC",
+  //   password: "public",
+  // };
+
+  // useEffect(() => {
+  //   const client = mqtt.connect(broker, options);
+
+  //   client.on("connect", () => {
+  //     client.subscribe("IMT/EVSE/MeterValues/+/up/imt", (err) => {
+  //       if (err) {
+  //         console.log(`Erro na conexão: ${broker} --> ${err}`);
+  //       } else {
+  //         console.log(`Conectado ao broker: ${broker}`);
+  //       }
+  //     });
+  //   });
+
+  //   client.on("message", async (topic, message) => {
+  //     try {
+  //       const jsonObject = JSON.parse(message.toString());
+
+  //       if (jsonObject.name === "MeterValues" && jsonObject.tags.deviceType === "EVSE") {
+  //         const { forwardEnergy } = jsonObject.fields;
+  //         const { chargePointId, connectorId, deviceId } = jsonObject.tags;
+  //         const timestamp = new Date(jsonObject.timestamp);
+
+  //         const status = await fetchEvseStatusNotificationByDeviceId(deviceId);
+
+  //         const evse = new GenericSensor(
+  //           chargePointId, // Name
+  //           "EVSE", // Type
+  //           [forwardEnergy], // Fields
+  //           [chargePointId, connectorId, deviceId, status], // Tags
+  //           connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'), // Local
+  //           timestamp
+  //         );
+  //         setSensors((prevData) => {
+  //           const existingEvse = prevData.find((item) => item.tags.includes(evse.tags[2])); // Match by deviceId
+  //           if (existingEvse) {
+  //             return prevData.map((item) =>
+  //               item.tags.includes(evse.tags[2]) ? { ...item, fields: evse.fields, timestamp: evse.timestamp } : item
+  //             );
+  //           } else {
+  //             return [...prevData, evse];
+  //           }
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Erro ao processar mensagem MQTT:", error);
+  //     }
+  //   });
+
+  //   return () => {
+  //     client.end();
+  //   };
+  // }, []);
 
   useEffect(() => {
-    const client = mqtt.connect(broker, options);
-
-    client.on("connect", () => {
-      client.subscribe("IMT/EVSE/MeterValues/+/up/imt", (err) => {
-        if (err) {
-          console.log(`Erro na conexão: ${broker} --> ${err}`);
-        } else {
-          console.log(`Conectado ao broker: ${broker}`);
-        }
-      });
-    });
-
-    client.on("message", async (topic, message) => {
+    async function fetchData() {
       try {
-        const jsonObject = JSON.parse(message.toString());
+        const sensorsData = await fetchEvseSensors();
+        console.log("Fetched sensors:", sensorsData);
+        setSensors(sensorsData);
 
-        if (jsonObject.name === "MeterValues" && jsonObject.tags.deviceType === "EVSE") {
-          const { forwardEnergy } = jsonObject.fields;
-          const { chargePointId, connectorId, deviceId } = jsonObject.tags;
-          const timestamp = new Date(jsonObject.timestamp);
-
-          const status = await fetchEvseStatusNotification(deviceId);
-
-          const evse = new GenericSensor(
-            chargePointId, // Name
-            "EVSE", // Type
-            [forwardEnergy], // Fields
-            [chargePointId, connectorId, deviceId, status], // Tags
-            connectorId.replace(/"/g, "").trim() === "1" ? "Bloco B" : (connectorId.replace(/"/g, "").trim() === "2" ? "Centro Acadêmico" : 'IMT'), // Local
-            timestamp
-          );
-          setSensors((prevData) => {
-            const existingEvse = prevData.find((item) => item.tags.includes(evse.tags[2])); // Match by deviceId
-            if (existingEvse) {
-              return prevData.map((item) =>
-                item.tags.includes(evse.tags[2]) ? { ...item, fields: evse.fields, timestamp: evse.timestamp } : item
-              );
-            } else {
-              return [...prevData, evse];
-            }
-          });
+        const statuses = {};
+        for (const sensor of sensorsData) {
+          if (sensor) {
+            const status = await fetchEvseStatusNotificationByDeviceId(sensor.tags[0]);
+            statuses[sensor.tags[0]] = status;
+          }
         }
+        setSensorStatuses(statuses);
       } catch (error) {
-        console.error("Erro ao processar mensagem MQTT:", error);
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
-    });
+    }
 
-    return () => {
-      client.end();
-    };
+    fetchData();
   }, []);
 
 
@@ -130,7 +161,7 @@ export default function Home() {
 
       const validData = allDataResponses.filter((data) => data !== null);
 
-      const emptyUrls = urls.filter((_, index) => allDataResponses[index] === null);
+      const emptyUrls = urls.filter((_, index) => allDataResponses === null);
       if (emptyUrls.length > 0) {
         console.log(`No data available for the following URLs:`, emptyUrls);
       }
@@ -261,7 +292,7 @@ export default function Home() {
                   userId: userData[0].id,
                   type: "Evse",
                   local: alarmSensor.local,
-                  deveui: alarmSensor.tags[2],
+                  deveui: alarmSensor.tags[0],
                   trigger: '',
                   triggerAt: '',
                   triggerType: triggerType,
@@ -319,13 +350,13 @@ export default function Home() {
               <div className="m-2">
                 <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
                 <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
-                  {selectedSensor.tags[1].replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                <p>Type: {selectedSensor.local === "IMT" ? "Station" : "Charger"}</p>
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
                   Local: {selectedSensor.local}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  DeviceID: {selectedSensor.tags[2]}
+                  DeviceID: {selectedSensor.tags[0]}
                 </p>
                 <ul className="text-sm space-y-2">
                   {
@@ -409,13 +440,13 @@ export default function Home() {
               <div className="m-2">
                 <p className="font-bold text-3xl text-center">Sensor Selecionado</p>
                 <h2 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 text-center">
-                  {alarmSensor.tags[1].replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                  <p><strong>Type: </strong>{alarmSensor.local === "IMT" ? "Station" : "Charger"}</p>
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
                   Local: {alarmSensor.local}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
-                  DEVICEID: {alarmSensor.tags[2]}
+                  DEVICEID: {alarmSensor.tags[0]}
                 </p>
                 <ul className="text-sm space-y-2">
                   {
@@ -425,7 +456,7 @@ export default function Home() {
                           <strong>ForwardEnergy: </strong>{alarmSensor.fields[0]}
                         </li>
                         <li>
-                          <strong>Type: </strong>{alarmSensor.tags[1].replace(/"/g, "").trim() === "0" ? "Charging Station" : "Charging Point"}
+                          <strong>Type: </strong>{alarmSensor.local === "IMT" ? "Station" : "Charger"}
                         </li>
                       </ul>
                     )
@@ -509,102 +540,63 @@ export default function Home() {
               Dados dos Carregadores EVSE
             </h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sensors.length > 0
-                ? [...Array(3)].map((_, index) => (
-                  sensors[index] ? (
-                    <div
-                      key={sensors[index].tags[2]}
-                      className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300"
-                    >
-                      {sensors[index].tags[1].replace(/"/g, "").trim() === "0"
-                        ? <h2 className="text-xl font-semibold mb-2">
-                          Central De Carregadores
-                        </h2>
-                        : <h2 className="text-xl font-semibold mb-2">
-                          Carregador do {sensors[index].local}
-                        </h2>}
+              {loading
+                ? 
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300">
+                    <h2 className="text-xl font-semibold mb-2 text-gray-400">Carregando...</h2>
+                    <p className="bg-gray-300 h-4 w-3/4 rounded my-2"></p>
+                    <p className="bg-gray-300 h-4 w-1/2 rounded my-2"></p>
+                    <p className="bg-gray-300 h-4 w-2/3 rounded my-2"></p>
+                    <p className="bg-gray-300 h-4 w-1/3 rounded my-2"></p>
+                    <p className="bg-gray-300 h-4 w-2/4 rounded my-2"></p>
+                    <div className="flex mt-2 space-x-2">
+                      <div className="bg-gray-300 h-10 w-24 rounded"></div>
+                      <div className="bg-gray-300 h-10 w-24 rounded"></div>
+                    </div>
+                  </div>
+                ))
+                : (sensors.map((sensor, index) => (
+                  <div key={index} className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300">
+                    <h2 className="text-xl font-semibold mb-2">
+                      Carregador {sensor.local}
+                    </h2>
+                    <p><strong>Forward Energy:</strong> {parseFloat(sensor.fields[0]).toFixed(4)} KWh</p>
+                    <p><strong>Device ID: </strong> {sensor.tags[0]}</p>
+                    <p><strong>Type: </strong>{sensor.local === "IMT" ? "Station" : "Charger"}</p>
 
-                      {/* <h2 className="text-xl font-semibold mb-2">
-                        Carregador do {sensors[index].local}
-                      </h2> */}
 
-                      <p>
-                        <strong>Forward Energy:</strong>{" "}
-                        {parseFloat(sensors[index].fields[0]).toFixed(4)} KWh
-                      </p>
-                      {/* <p>
-                        <strong>Local: </strong> {sensors[index].local}
-                      </p> */}
-                      <p>
-                        <strong>Device ID: </strong> {sensors[index].tags[2]}
-                      </p>
-                      <p>
-                        <strong>Type:</strong>
-                        {sensors[index].tags[1].replace(/"/g, "").trim() === "0"
-                          ? " Charging Station"
-                          : " Charging Point"}
-                      </p>
-                      <p>
-                        <strong>Status: </strong> {sensors[index].tags[3]}{" "}
-                      </p>
-                      <p>
-                        <strong>Atualizado por último:</strong>{" "}
-                        {new Date(Number(sensors[index].timestamp) * 1000).toLocaleString()}
-                      </p>
-                      <div className="flex mt-2 space-x-2">
+                    <p><strong>Status: </strong>{sensorStatuses[sensor.tags[0]] ?? "Loading..."}</p>
+                    <p>
+                      <strong>Atualizado por último há:</strong>{" "}
+                      {formatDistanceToNow(new Date(sensor.timestamp), { locale: ptBR })}
+                    </p>
+                    <div className="flex mt-2 space-x-2">
+                      <button
+                        onClick={() => {
+                          setExportInfoPopupOpen(true);
+                          setSelectedSensor(sensor);
+                        }}
+                        className="bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
+                      >
+                        Exportar .csv
+                      </button>
+                      {sensor.local !== "IMT" && (
                         <button
                           onClick={() => {
-                            setExportInfoPopupOpen(true);
-                            setSelectedSensor(sensors[index]);
+                            setAlarmPopupOpen(!alarmPopupOpen);
+                            setAlarmSensor(sensor);
                           }}
-                          className="bg-blue-500 text-white font-bold py-3 px-6 rounded hover:bg-blue-600"
+                          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
                         >
-                          Exportar .csv
+                          Adicionar Alarme
                         </button>
-                        {sensors[index].local !== "IMT" && (
-                          <button
-                            onClick={() => {
-                              setAlarmPopupOpen(!alarmPopupOpen);
-                              setAlarmSensor(sensors[index]);
-                            }}
-                            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                          >
-                            Adicionar Alarme
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ) : (
-                    <div
-                      key={`loading-${index}`}
-                      className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 "
-                    >
-                      <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
-                      <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
-                      <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-5/6 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-2/3 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-                    </div>
-                  )
-                ))
-                : [...Array(3)].map((_, index) => (
-                  <div
-                    key={`loading-${index}`}
-                    className="bg-gray-100 rounded-lg shadow-md p-4 border border-gray-300 "
-                  >
-                    <div className="h-6  rounded w-3/4 mb-4 font-bold">Carregando...</div>
-                    <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
-                    <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-5/6 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-2/3 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
                   </div>
-                ))}
+                ))
+                )}
+
             </div>
           </main>
         </div>

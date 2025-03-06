@@ -1,5 +1,4 @@
 import { GenericSensor } from '@/lib/dataTypes';
-import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 const apiUrlSmartLight = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/SmartLight/all?interval=30";
 const apiUrlWaterTankLevel = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/WaterTankLevel/all?interval=30";
@@ -8,13 +7,15 @@ const apiUrlEnergyMeter = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/I
 const apiUrlWeatherStation = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/WeatherStation/all?interval=30";
 const apiUrlSprinkler = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Sprinkler/all?interval=30";
 const apiUrlSoilMoisture3DepthLevels = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/SoilMoisture3DepthLevels/all?interval=30";
-const apiUrlEvseStatusNotification = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/all?interval=30000";
-// const apiUrlEvseStartTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/all?interval=30";
-// const apiUrlEvseStopTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StTransaction/all?interval=30000";
 const apiUrlVibrationAverage = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/VibrationAverage/all?interval=30"
 const apiUrlTemperature8Point = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/LNS/Temperature8Point/all?interval=30"
+// in the future implement all the evse apiUrl in the sanitize code
+const apiUrlEvseStatusNotification = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/all?interval=20000";
+// const apiUrlEvseStartTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/all?interval=100";
+// const apiUrlEvseStopTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StTransaction/all?interval=100";
+const apiUrlEvseMeterValues = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/MeterValues/all?interval=20000";
 
-async function fetchEvseStatusNotification(deviceId) {
+async function fetchEvseStatusNotificationByDeviceId(deviceId) {
   try {
     const response = await fetch(apiUrlEvseStatusNotification);
     const text = await response.text();
@@ -25,15 +26,74 @@ async function fetchEvseStatusNotification(deviceId) {
 
     if (!Array.isArray(data) || data.length === 0) {
       console.warn("Response is not an array or is empty");
-      return null; 
+      return null;
     }
 
     const deviceData = data.find(item => item?.tags?.deviceId === deviceId);
     return deviceData?.tags?.status ?? "Sem informações";
   } catch (error) {
     console.error('Error fetching status:', error);
-    return null; 
+    return null;
   }
+}
+
+
+async function fetchEvseStatusNotification() {
+  const response = await fetch(apiUrlEvseStatusNotification);
+
+  const data = await response.json();
+
+  return data;
+}
+
+// async function fetchEvseStartTransaction() {
+//   try {
+//     const response = await fetch(apiUrlEvseStartTransaction);
+//     const text = await response.text();
+
+//     if (!response.ok || !text) throw new Error('Invalid or empty response (StartTransaction)');
+
+//     const data = JSON.parse(text);
+
+//     if (!Array.isArray(data) || data.length === 0) {
+//       console.warn("Response is not an array or is empty");
+//       return null; 
+//     }
+
+//     const deviceData = data.find(item => item?.tags?.deviceId);
+//     return deviceData?.tags?.status ?? "Sem informações";
+//   } catch (error) {
+//     console.error('Error fetching status:', error);
+//     return null; 
+//   }
+// }
+// async function fetchEvseStopTransaction() {
+//   try {
+//     const response = await fetch(apiUrlEvseStopTransaction);
+//     const text = await response.text();
+
+//     if (!response.ok || !text) throw new Error('Invalid or empty response (StopTransaction)');
+
+//     const data = JSON.parse(text);
+
+//     if (!Array.isArray(data) || data.length === 0) {
+//       console.warn("Response is not an array or is empty");
+//       return null; 
+//     }
+
+//     const deviceData = data.find(item => item?.tags?.deviceId);
+//     return deviceData?.tags?.status ?? "Sem informações";
+//   } catch (error) {
+//     console.error('Error fetching status:', error);
+//     return null; 
+//   }
+// }
+async function fetchEvseMeterValues() {
+  const response = await fetch(apiUrlEvseMeterValues);
+
+  const data = await response.json();
+
+  return data;
 }
 
 async function fetchSmartLight() {
@@ -119,8 +179,16 @@ async function fetchAllSensors() {
   ...sprinkler,
   ...soilMoisture,
   ...vibrationAverage,
-  ...temperature8Point
-];
+  ...temperature8Point,
+  ];
+};
+
+async function fetchEvseData() {
+  const evseMeterValues = await fetchEvseMeterValues();
+
+  return [
+    ...evseMeterValues,
+  ];
 };
 
 const sanitize = (value: any) => (value === "" || value === null ? "Indisponível" : value);
@@ -128,7 +196,9 @@ const sanitize = (value: any) => (value === "" || value === null ? "Indisponíve
 const fetchSensors = async () => {
   const { data: sensorsInfo, error } = await supabase
     .from('Sensors')
-    .select("Nome, DEVEUI, Local, Tipo");
+    .select("Nome, DEVEUI, Local, Tipo")
+    .neq("Tipo", "Evse")
+    .neq("Tipo", "EvseChargingStation");
 
   if (error) {
     console.error('Error fetching sensors data: ', error);
@@ -401,7 +471,7 @@ const fetchSensors = async () => {
                 sanitize(Number(sensorData.fields.vibrationAverageZ)) + " G",
                 sanitize(sensorData.fields.boardVoltage) + " V",
                 sanitize(sensorData.fields.humidity) + " %",
-                sanitize(sensorData.fields.temperature) + " °C",                 
+                sanitize(sensorData.fields.temperature) + " °C",
               ],
               [
                 sanitize(sensorData.tags.deviceId),
@@ -418,18 +488,18 @@ const fetchSensors = async () => {
             sensorData.name,
             [
               sanitize(Number(sensorData.fields.vibrationAverageX)) + " G",
-                sanitize(Number(sensorData.fields.vibrationAverageY)) + " G",
-                sanitize(Number(sensorData.fields.vibrationAverageZ)) + " G",
-                sanitize(sensorData.fields.boardVoltage) + " V",
-                sanitize(sensorData.fields.humidity) + " %",
-                sanitize(sensorData.fields.temperature) + " °C",  
+              sanitize(Number(sensorData.fields.vibrationAverageY)) + " G",
+              sanitize(Number(sensorData.fields.vibrationAverageZ)) + " G",
+              sanitize(sensorData.fields.boardVoltage) + " V",
+              sanitize(sensorData.fields.humidity) + " %",
+              sanitize(sensorData.fields.temperature) + " °C",
             ],
             [sanitize(sensorData.tags.deviceId)],
             "Indisponível",
             new Date(Number(sensorData.timestamp) / 1e6)
           );
         }
-        
+
       } else if (sensorData.name === "Temperature8Point") {
         sensorsInfo.forEach(sensorInfo => {
           if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
@@ -460,17 +530,17 @@ const fetchSensors = async () => {
           newSensor = new GenericSensor(
             "Indisponível",
             sensorData.name,
-              [
-                sanitize(Number(sensorData.fields.temperature1)) + " °C",
-                sanitize(Number(sensorData.fields.temperature2)) + " °C",
-                sanitize(Number(sensorData.fields.temperature3)) + " °C",
-                sanitize(Number(sensorData.fields.temperature4)) + " °C",
-                sanitize(Number(sensorData.fields.temperature5)) + " °C",
-                sanitize(Number(sensorData.fields.temperature6)) + " °C",
-                sanitize(Number(sensorData.fields.temperature7)) + " °C",
-                sanitize(Number(sensorData.fields.temperature8)) + " °C",
-                sanitize(sensorData.fields.boardVoltage) + " V",
-              ],
+            [
+              sanitize(Number(sensorData.fields.temperature1)) + " °C",
+              sanitize(Number(sensorData.fields.temperature2)) + " °C",
+              sanitize(Number(sensorData.fields.temperature3)) + " °C",
+              sanitize(Number(sensorData.fields.temperature4)) + " °C",
+              sanitize(Number(sensorData.fields.temperature5)) + " °C",
+              sanitize(Number(sensorData.fields.temperature6)) + " °C",
+              sanitize(Number(sensorData.fields.temperature7)) + " °C",
+              sanitize(Number(sensorData.fields.temperature8)) + " °C",
+              sanitize(sensorData.fields.boardVoltage) + " V",
+            ],
             [sanitize(sensorData.tags.deviceId)],
             "Indisponível",
             new Date(Number(sensorData.timestamp) / 1e6)
@@ -506,6 +576,83 @@ const fetchSensors = async () => {
   });
   return updatedSensores;
 };
+
+
+const fetchEvseSensors = async () => {
+  const { data: sensorsInfo, error } = await supabase
+    .from('Sensors')
+    .select("Nome, DEVEUI, Local, Tipo")
+    .in("Tipo", ["Evse", "EvseChargingStation"]);
+
+  console.log("Supabase sensorsInfo:", sensorsInfo);
+  console.log("Supabase error:", error);
+
+
+  if (error) {
+    console.error('Error fetching sensors data: ', error);
+    return;
+  }
+
+  const sensorsData = await fetchEvseData();
+  console.log("EVSE API Response:", sensorsData);
+  var updatedSensores = [];
+  sensorsData.forEach(sensorData => {
+    const isDuplicate = updatedSensores.some(
+      sensor => sanitize(sensor.tags[0]) === sanitize(sensorData.tags.deviceId)
+    );
+    var sensorAlreadyExists = false;
+
+    if (!isDuplicate) {
+      let newSensor;
+      
+      if (sensorData.name === "EvseMeterValues" && !sensorAlreadyExists) {
+        sensorsInfo.forEach(sensorInfo => {
+          if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
+            newSensor = new GenericSensor(
+              sanitize(sensorInfo.Nome),
+              sensorData.name,
+              [
+                sanitize(sensorData.fields.forwardEnergy) + " V",
+              ],
+              [sanitize(sensorData.tags.deviceId)],
+              sanitize(sensorInfo.Local),
+              new Date(Number(sensorData.timestamp) / 1e6)
+            );
+            sensorAlreadyExists = true;
+          }
+        });
+        
+      }
+
+      if (newSensor) {
+        updatedSensores.push(newSensor);
+      }
+    }
+  });
+  sensorsInfo.forEach(sensorInfo => {
+    const isMissingInSensorsData = !sensorsData.some(sensorData =>
+      sanitize(sensorData.tags.deviceId) === sanitize(sensorInfo.DEVEUI)
+    );
+    if (isMissingInSensorsData) {
+      const alreadyExists = updatedSensores.some(sensor =>
+        sanitize(sensor.tags[0]) === sanitize(sensorInfo.DEVEUI)
+      );
+      if (!alreadyExists) {
+        updatedSensores.push(
+          new GenericSensor(
+            sanitize(sensorInfo.Nome),
+            sanitize(sensorInfo.Tipo),
+            ["Sensor Offline"],
+            [sanitize(sensorInfo.DEVEUI)],
+            sanitize(sensorInfo.Local)
+          )
+        );
+      }
+    }
+  });
+  return updatedSensores;
+};
+
 
 async function fetchSensorByDEVEUI(deveui: string) {
   const allSensors = await fetchAllSensors();
@@ -548,4 +695,4 @@ async function fetchSensorByDEVEUI(deveui: string) {
 }
 
 
-export { fetchSmartLight, fetchAllSensors, fetchSensors, fetchSensorByDEVEUI, fetchEvseStatusNotification }
+export { fetchSmartLight, fetchAllSensors, fetchSensors, fetchEvseSensors, fetchSensorByDEVEUI, fetchEvseStatusNotificationByDeviceId }
