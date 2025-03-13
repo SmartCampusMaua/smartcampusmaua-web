@@ -5,8 +5,7 @@ import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import { GenericSensor } from "@/lib/dataTypes";
 import { supabase } from "@/lib/supabaseClient";
-import { fetchEvseSensors, fetchEvseStatusNotificationByDeviceId } from "@/lib/timeseries";
-// import { fetchEvseStatusNotificationByDeviceId } from  "@/lib/timeseries";
+import { fetchEvseSensors, fetchEvseStatusNotificationByEvseId } from "@/lib/timeseries";
 import { User } from '@/app/lib/userSession';
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -91,7 +90,7 @@ export default function EvsePage() {
         const statuses = {};
         for (const sensor of sensorsData) {
           if (sensor) {
-            const status = await fetchEvseStatusNotificationByDeviceId(sensor.tags[0]);
+            const status = await fetchEvseStatusNotificationByEvseId(sensor.tags[0]);
             statuses[sensor.tags[0]] = status;
           }
         }
@@ -134,13 +133,13 @@ export default function EvsePage() {
     }
   };
 
-  const handleExportSensor = async (id, interval) => { // by now we are only exporting MeterValue data!! because there isn't any data on the others 
+  const handleExportSensor = async (id, interval) => { 
     try {
       const urls = [
-        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/MeterValues/deviceId/${id}?interval=${interval}`,
-        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/deviceId/${id}?interval=${interval}`,
-        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/deviceId/${id}?interval=${interval}`,
-        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StopTransaction/deviceId/${id}?interval=${interval}`,
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/MeterValues/all?interval=${interval}`,
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StatusNotification/all?interval=${interval}`,
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StartTransaction/all?interval=${interval}`,
+        `https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StopTransaction/all?interval=${interval}`,
       ];
 
       const fetchData = async (url) => {
@@ -166,7 +165,8 @@ export default function EvsePage() {
         console.log(`No data available for the following URLs:`, emptyUrls);
       }
 
-      const combinedData = validData.flat();
+      // Filter combined data by evseId
+      const combinedData = validData.flat().filter((item) => item.evseId === id);
 
       if (combinedData.length === 0) {
         console.warn("No valid data to process.");
@@ -313,7 +313,7 @@ export default function EvsePage() {
                   userId: userData[0].id,
                   type: "Evse",
                   local: alarmSensor.local,
-                  deveui: alarmSensor.tags[2],
+                  deveui: alarmSensor.tags[0],
                   trigger: trigger,
                   triggerAt: triggerAt,
                   triggerType: triggerType,
@@ -414,7 +414,7 @@ export default function EvsePage() {
                 <button
                   onClick={() => {
                     setExportInfoPopupOpen(false);
-                    handleExportSensor(selectedSensor.tags[2], interval);
+                    handleExportSensor(selectedSensor.tags[0], interval);
                   }}
                   className="bg-left text-white font-bold py-2 px-4 rounded border border-green-400 bg-green-400 hover:bg-green-700 "
                 >
@@ -562,7 +562,7 @@ export default function EvsePage() {
                       Carregador {sensor.local}
                     </h2>
                     <p><strong>Forward Energy:</strong> {parseFloat(sensor.fields[0]).toFixed(4)} KWh</p>
-                    <p><strong>Device ID: </strong> {sensor.tags[0]}</p>
+                    <p><strong>Evse ID: </strong> {sensor.tags[0]}</p>
                     <p><strong>Type: </strong>{sensor.local === "IMT" ? "Station" : "Charger"}</p>
 
 

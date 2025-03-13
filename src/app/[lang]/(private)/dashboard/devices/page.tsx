@@ -943,7 +943,7 @@ const Sensores = () => {
 
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <p className="text-2xl text-black">Carregando...</p>
+                <p className="text-2xl text-black">Carregando Dispositivos...</p>
               </div>
             ) : (
               <div className="container mx-auto">

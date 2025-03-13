@@ -15,7 +15,7 @@ const apiUrlEvseStatusNotification = "https://smartcampus-k8s.maua.br/api/timese
 // const apiUrlEvseStopTransaction = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/StTransaction/all?interval=100";
 const apiUrlEvseMeterValues = "https://smartcampus-k8s.maua.br/api/timeseries/v0.3/IMT/EVSE/MeterValues/all?interval=20000";
 
-async function fetchEvseStatusNotificationByDeviceId(deviceId) {
+async function fetchEvseStatusNotificationByEvseId(evseId) {
   try {
     const response = await fetch(apiUrlEvseStatusNotification);
     const text = await response.text();
@@ -29,7 +29,7 @@ async function fetchEvseStatusNotificationByDeviceId(deviceId) {
       return null;
     }
 
-    const deviceData = data.find(item => item?.tags?.deviceId === deviceId);
+    const deviceData = data.find(item => item?.tags?.evseId === evseId);
     return deviceData?.tags?.status ?? "Sem informações";
   } catch (error) {
     console.error('Error fetching status:', error);
@@ -38,13 +38,13 @@ async function fetchEvseStatusNotificationByDeviceId(deviceId) {
 }
 
 
-async function fetchEvseStatusNotification() {
-  const response = await fetch(apiUrlEvseStatusNotification);
+// async function fetchEvseStatusNotification() {
+//   const response = await fetch(apiUrlEvseStatusNotification);
 
-  const data = await response.json();
+//   const data = await response.json();
 
-  return data;
-}
+//   return data;
+// }
 
 // async function fetchEvseStartTransaction() {
 //   try {
@@ -598,7 +598,7 @@ const fetchEvseSensors = async () => {
   var updatedSensores = [];
   sensorsData.forEach(sensorData => {
     const isDuplicate = updatedSensores.some(
-      sensor => sanitize(sensor.tags[0]) === sanitize(sensorData.tags.deviceId)
+      sensor => sanitize(sensor.tags[0]) === sanitize(sensorData.tags.evseId)
     );
     var sensorAlreadyExists = false;
 
@@ -607,14 +607,14 @@ const fetchEvseSensors = async () => {
       
       if (sensorData.name === "EvseMeterValues" && !sensorAlreadyExists) {
         sensorsInfo.forEach(sensorInfo => {
-          if (sensorInfo.DEVEUI == sensorData.tags.deviceId) {
+          if (sensorInfo.DEVEUI == sensorData.tags.evseId) {
             newSensor = new GenericSensor(
               sanitize(sensorInfo.Nome),
               sensorData.name,
               [
                 sanitize(sensorData.fields.forwardEnergy) + " V",
               ],
-              [sanitize(sensorData.tags.deviceId)],
+              [sanitize(sensorData.tags.evseId)],
               sanitize(sensorInfo.Local),
               new Date(Number(sensorData.timestamp) / 1e6)
             );
@@ -695,4 +695,4 @@ async function fetchSensorByDEVEUI(deveui: string) {
 }
 
 
-export { fetchSmartLight, fetchAllSensors, fetchSensors, fetchEvseSensors, fetchSensorByDEVEUI, fetchEvseStatusNotificationByDeviceId }
+export { fetchSmartLight, fetchAllSensors, fetchSensors, fetchEvseSensors, fetchSensorByDEVEUI, fetchEvseStatusNotificationByEvseId }

@@ -3,7 +3,7 @@ import NavLinks from "./nav-links";
 export default function Sidenav({ isOpen }: { isOpen: boolean }) {
   return (
     <nav
-      className={`fixed top-14 w-60 overflow-y-auto overflow-y-hidden absolute z-10 ${
+      className={`fixed top-14 w-60 overflow-y-auto overflow-y-hidden z-10 ${
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
       style={{ height: "calc(100vh - 56px)" }}
